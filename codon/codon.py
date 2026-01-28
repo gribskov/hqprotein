@@ -36,6 +36,7 @@ class Codon:
         Constructor for Codon class
         -------------------------------------------------------------------------------------------------------------"""
         self.count = {c: 0 for c in Codon.codon2aa}
+        self.n = 0
 
     def add_from_dna(self, dna, frame=0):
         """-------------------------------------------------------------------------------------------------------------
@@ -46,13 +47,12 @@ class Codon:
         :return: int            number of codons added
         -------------------------------------------------------------------------------------------------------------"""
         start = frame
-        codon_n = 0
         dna = dna.upper()
         for start in range(frame, len(dna), 3):
-            codon_n += 1
+            self.codon_n += 1
             self.count[dna[start:start + 3]] += 1
 
-        return codon_n
+        return self.codon_n
 
 
 # ######################################################################################################################
