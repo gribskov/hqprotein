@@ -47,6 +47,7 @@ class Codon:
         -------------------------------------------------------------------------------------------------------------"""
         start = frame
         codon_n = 0
+        dna = dna.upper()
         for start in range(frame, len(dna), 3):
             codon_n += 1
             self.count[dna[start:start + 3]] += 1
