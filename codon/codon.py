@@ -41,17 +41,51 @@ class Codon:
         """-------------------------------------------------------------------------------------------------------------
         Add the codon counts from a DNA sequence in fasta format to the current count
 
-        :param dna: Fasta   fasta formatted DNA sequence
-        :param frame: int   reading frame to use, 0 indicates start with base 0
-        :return: int        number of codons added
+        :param dna: Fasta       fasta formatted DNA sequence
+        :param frame: int       reading frame to use, 0 indicates start with base 0
+        :return: int            number of codons added
         -------------------------------------------------------------------------------------------------------------"""
+        start = frame
+        codon_n = 0
+        for start in range(frame, len(dna), 3):
+            codon_n += 1
+            self.count[dna[start:start + 3]] += 1
+
+        return codon_n
 
 
 # ######################################################################################################################
 # Testing
 # ######################################################################################################################
 if __name__ == '__main__':
+    print(f'Read codons of coding frame from DNA')
     coding = Codon()
-    print(id(coding.codon2aa))
+
+    seq = '''ATGAGGTTCCACGTTCATTCGACGCCATTCTACCAACGCATAGCCTGCAACACCACATCGACCATCACTG
+             CGCACTCCACAAGTAGCCGGCAGACCATACCGTCAAGTTCGAGAATGTCCGTCCAACAAACAATCAACGA
+             GGAGAGGATGGAGAACCGGGCAACATTGTCGCTCCAGTGCGAGTCCAGGCTGATCACCTCAGGCCACACG
+             ACGCCTGACTTCATCAATCGGATGAACAGCCTCTTACAAGACTACGTCGACATCGAGTACGGTCTCATCC
+             TGCGCATTCGCCAAATTCTGAAGAACCGGGGTCTCGACCGGCAATGTTGGACCCCCGACCGCATCGACGG
+             GTACGAGAGATTCACGGAGTCATGGATCTACAGGCTGGGCTATTCAACGAACTTTGAAAGGGACTTCTCC
+             CCATCCGACATGATGGCTTTGATCGCAGATCTCGACGCTCTCCTGCTAGACGCTCAAATTGCGAATGATA
+             TCGAGTTCGAATGGCAGGATGTCTCGGCTGAGGGCGACCGGTTAGGGAAATGCTGCGAAGGTTCGCATCC
+             GACCAAGCGGAAGATCATCATCTTTGCACTGGGTCGTACCTCTGCGGACATCTTAATCGGCACCCTTGTG
+             CATGAGATGTGTCATGCCTTCATCGATATATCGCTCATTGATGAGCTCGGCCATGAATCAGCCTACGACC
+             CTGAGGGTGGCAACACCGAGCCGTGGACCACAGCAATCGGAAGCACAGGCCATGGCTACTGCTGGCAAAT
+             GCTCGCTATGATCATGAACGACTGTTCGGAAGCCATTGGGTACCCTTTTGACCTTGGTTTTGAAGACGCT
+             GGAAACAGCGACTTCGACGGACACCTCGGCGATCGCCTCTCCGGTCTAGGGCGATACGAAGTGGAGGAAC
+             CCAGCTCGCCATGGGCTACTTTACACGGTCGGCAGCAGCGGCGGGCCGAGGTTGACAGGGCTGAGAGGGA
+             GGAAGCCAGGCAGGGGGAAGAGGAATCGTCCGAAGGATCTTCACCCGGAGAAGATACGATGATGGAGCTC
+             ACACAGAGCGATATCGTGGCGACTTGA'''
+    seq = seq.replace('\n', '').replace(' ', '')
+    lastcodon = seq[-3:len(seq)]
+    print(f'\tSequence is {len(seq)} bases long and ends in {lastcodon}')
+
+    codon_n = coding.add_from_dna(seq)
+    print(f'\texpect {len(seq) // 3} codons. codons read: {codon_n}')
+
+    codon_n += coding.add_from_dna(seq)
+    print(f'\tRead second time, expect {len(seq) // 3 * 2} codons. ', end='')
+    print(f'codons read: {codon_n}\tcount({lastcodon}): {coding.count[lastcodon]}')
 
     exit(0)
