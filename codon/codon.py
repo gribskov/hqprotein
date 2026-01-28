@@ -37,14 +37,21 @@ class Codon:
         -------------------------------------------------------------------------------------------------------------"""
         self.count = {c: 0 for c in Codon.codon2aa}
 
+    def add_from_dna(self, dna, frame=0):
+        """-------------------------------------------------------------------------------------------------------------
+        Add the codon counts from a DNA sequence in fasta format to the current count
+
+        :param dna: Fasta   fasta formatted DNA sequence
+        :param frame: int   reading frame to use, 0 indicates start with base 0
+        :return: int        number of codons added
+        -------------------------------------------------------------------------------------------------------------"""
+
 
 # ######################################################################################################################
 # Testing
 # ######################################################################################################################
 if __name__ == '__main__':
-
     coding = Codon()
     print(id(coding.codon2aa))
 
     exit(0)
-
