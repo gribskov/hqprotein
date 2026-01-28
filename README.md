@@ -4,7 +4,13 @@
 Anecdotally it seems that may gene models in complete genomes contain errors 
 such as missing exons, included introns, artificial fusion to adjacent genes,
 and artificial splitting into multiple predicted genes. Thee is a great deal of 
-information that is not included in standard gene models that might be able to detect and correct these errors
+information that is not included in standard gene models that might be able to 
+detect and correct these errors.
+
+Some of the most fundamental work in this are was done by Roger Staden.
+> Staden R. Measurements of the effects that coding for a protein has on a DNA sequence and their use for finding genes. Nucleic Acids Res. 1984 Jan 11;12(1 Pt 2):551-67. doi: 10.1093/nar/12.1part2.551. 
+> 
+> Staden R. Finding protein coding regions in genomic sequences. Methods Enzymol. 1990;183:163-80. doi: 10.1016/0076-6879(90)83012-x.
 
 ## Possible information to include
 For simplicity, we can discuss coding reading frames, **cORFs**, noncoding reading
