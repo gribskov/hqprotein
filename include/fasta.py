@@ -61,7 +61,7 @@ class Fasta:
             fasta.fh = fh
         elif filename:
             fasta.open(filename)
-            fasta.read()
+            # fasta.read()
 
     def open(fasta, filename):
         """-----------------------------------------------------------------------------------------
