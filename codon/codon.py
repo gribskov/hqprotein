@@ -49,7 +49,7 @@ class Codon:
         -------------------------------------------------------------------------------------------------------------"""
         start = frame
         dna = dna.upper()
-        for start in range(frame, len(dna), 3):
+        for start in range(frame, len(dna)-2, 3):
             self.n += 1
             self.count[dna[start:start + 3]] += 1
 
