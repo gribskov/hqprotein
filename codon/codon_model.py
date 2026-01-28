@@ -27,24 +27,16 @@ for frame in range(3):
     print(f'frame: {frame}\tcodons: {rf[frame].n}')
     rf[frame].update_frequencies()
 
-aa2codon = defaultdict(list)
-aa_count = {}
-for codon in Codon.codon2aa:
-    aa = Codon.codon2aa[codon]
-    aa2codon[aa].append(codon)
-
-# aa_count = { aa:[0,0,0] for aa in aa2codon}
-# for aa in aa_count:
-#     for codon in aa2codon[aa]:
-#         for frame in range(3):
-#             aa_count[aa] +=
+aacount = []
+frame = 0
+aacount[frame] = Codon()
+aacount[frame].add_from_codon(rf[0])
 
 
-for aa in sorted(aa2codon):
-    print(f'{aa}\t{aa2codon[aa]}')
-    for codon in sorted(aa2codon[aa]):
-        print(f'\t{codon}\t{rf[0].frequency[codon]:.4f}')
 
-
+# for aa in sorted(aa2codon):
+#     print(f'{aa}\t{aa2codon[aa]}')
+#     for codon in sorted(aa2codon[aa]):
+#         print(f'\t{codon}\t{rf[0].frequency[codon]:.4f}')
 
 exit(0)
