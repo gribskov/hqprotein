@@ -36,6 +36,7 @@ class Codon:
         Constructor for Codon class
         -------------------------------------------------------------------------------------------------------------"""
         self.count = {c: 0 for c in Codon.codon2aa}
+        self.frequency = {c: 0 for c in Codon.codon2aa}
         self.n = 0
 
     def add_from_dna(self, dna, frame=0):
@@ -49,10 +50,24 @@ class Codon:
         start = frame
         dna = dna.upper()
         for start in range(frame, len(dna), 3):
-            self.codon_n += 1
+            self.n += 1
             self.count[dna[start:start + 3]] += 1
 
-        return self.codon_n
+        return self.n
+
+    def update_frequencies(self):
+        """-------------------------------------------------------------------------------------------------------------
+        Using the current count and n, calculate the frequency of each codon, P(codon|dna_seq)
+        frequency is stored in self.frequency
+        Use the returned sum of the frequencies to check for errors (such as incorrect number  of codons, self.b)
+
+        :return: float      sum of frequency, should be 1.0
+        -------------------------------------------------------------------------------------------------------------"""
+        count = self.count
+        n = self.n
+        self.frequency = {c: count[c] / n for c in count}
+
+        return sum(self.frequency.values())
 
 
 # ######################################################################################################################
