@@ -15,6 +15,9 @@ codon_total = 0
 while cds.next():
     print(cds.id)
     codon_total += codon.add_from_dna(cds.seq)
-    print(f'\t=>{codon_total}')
+    print(f'\tnumber of codons => {codon_total}')
+
+    freq_sum = codon.update_frequencies()
+    print(f'\tfrequency sum => {freq_sum}')
 
 exit(0)
