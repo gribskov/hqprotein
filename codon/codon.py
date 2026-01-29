@@ -57,10 +57,61 @@ class Codon:
                     Codon.aa2codon[aa] = []
                 Codon.aa2codon[aa].append(codon)
 
+    def __add__(self, addend):
+        """-------------------------------------------------------------------------------------------------------------
+        overload + operator. codon + 1 or codon1 + codon2
+        currently supports addition by another instance of Codon, int, or float
+        returns a new Codon object
+
+        :param addend: various       addendinator for division, Codon, int, and float supported
+        :return: Codon              new codon with result of division
+        -------------------------------------------------------------------------------------------------------------"""
+        if isinstance(addend, Codon):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] + addend.count[codon]
+                result.n = sum(result.count.values())
+            return result
+        elif isinstance(addend, (int, float)):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] + addend
+                result.n = sum(result.count.values())
+            return result
+
+        # only reach here for unknown addend type
+        return NotImplemented
+
+    def __radd__(self, addend):
+        """-------------------------------------------------------------------------------------------------------------
+        overload + operator with the Codon object on the right side, i.e., 1 + codon
+        currently supports addition by another instance of Codon, int, or float
+        returns a new Codon object
+
+        :param addend: various       addendinator for division, Codon, int, and float supported
+        :return: Codon              new codon with result of division
+        -------------------------------------------------------------------------------------------------------------"""
+        if isinstance(addend, Codon):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] + addend.count[codon]
+                result.n = sum(result.count.values())
+            return result
+        elif isinstance(addend, (int, float)):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] + addend
+                result.n = sum(result.count.values())
+            return result
+
+        # only reach here for unknown addend type
+        return NotImplemented
+
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
         overload / operator.
         currently supports division by another instance of Codon, int, or float
+        returns a new Codon object
 
         :param denom: various       denominator for division, Codon, int, and float supported
         :return: Codon              new codon with result of division
@@ -210,6 +261,22 @@ if __name__ == '__main__':
         t1.n += 1
     t2 = t1 / t3
     print(t2)
+
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest addition\n{"*" * 80}')
+
+    t1 = Codon()
+    t1 += 1
+    print('t1 += 1; All values should be 1')
+    print(t1)
+
+    t2 = 2 + t1
+    print('\nt2 = 2 + t1; All values should be 3')
+    print(t2)
+
+    t3 = t1 + t2
+    print('\nt3 = t1 + t2; All values should be 4')
+    print(t3)
 
     #-----------------------------------------------------------------------------------------------
     print(f'\n{"*"*80}\nTest division by 2; should match original count\n{"*"*80}')
