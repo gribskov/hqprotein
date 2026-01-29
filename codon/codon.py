@@ -46,12 +46,13 @@ class Codon:
         self.frequency = {c: 0 for c in Codon.codon2aa}
         self.n = 0
 
-        # construct aa2codon from codon2aa
-        for codon in Codon.codon2aa:
-            aa = Codon.codon2aa[codon]
-            if aa not in Codon.aa2codon:
-                Codon.aa2codon[aa] = []
-            Codon.aa2codon[aa].append(codon)
+        if not Codon.aa2codon:
+            # construct aa2codon from codon2aa, it's a class variable so it may already be defined
+            for codon in Codon.codon2aa:
+                aa = Codon.codon2aa[codon]
+                if aa not in Codon.aa2codon:
+                    Codon.aa2codon[aa] = []
+                Codon.aa2codon[aa].append(codon)
 
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
@@ -65,12 +66,15 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
+                result.n += result.count[codon]
             return result
+
         elif isinstance(denom, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
-        return result
+                result.n += result.count[codon]
+            return result
 
         # only reach here for unknown denominator type
         return NotImplemented
