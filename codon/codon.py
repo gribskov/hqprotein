@@ -159,6 +159,9 @@ if __name__ == '__main__':
     print(f'\tRead second time, expect {len(seq) // 3 * 2} codons. ', end='')
     print(f'codons read: {codon_n}\tcount({lastcodon}): {coding.count[lastcodon]}')
 
+# TODO test update_frequencies
+# TODO test division by codon
+# TODO test division by int
 
 
     exit(0)
