@@ -10,7 +10,9 @@ class Codon:
     Codon
 
     codon2aa - class variable with standard codon definitions stored as dict
-    aa2codon - class variable with list of codons for each one-letter amino acid residue
+    aa2codon - class variable with list of codons for each one-letter amino acid residue, aa2codon can be populated
+               from codon2aa so only codon2aa needs to be defined.
+               TODO add method to populate aa2codon
     -----------------------------------------------------------------------------------------------------------------"""
     codon2aa = {"AAA": "K", "AAC": "N", "AAG": "K", "AAT": "N",
                 "ACA": "T", "ACC": "T", "ACG": "T", "ACT": "T",
@@ -35,7 +37,10 @@ class Codon:
 
     def __init__(self):
         """-------------------------------------------------------------------------------------------------------------
-        Constructor for Codon class
+        Constructor for Codon class.
+        Instance variables:
+            count: integer count of each defined symbol (codon or AA, for instance)
+            n: sum of counts for all symbols
         -------------------------------------------------------------------------------------------------------------"""
         self.count = {c: 0 for c in Codon.codon2aa}
         self.frequency = {c: 0 for c in Codon.codon2aa}
@@ -58,7 +63,7 @@ class Codon:
         -------------------------------------------------------------------------------------------------------------"""
         start = frame
         dna = dna.upper()
-        for start in range(frame, len(dna)-2, 3):
+        for start in range(frame, len(dna) - 2, 3):
             self.n += 1
             self.count[dna[start:start + 3]] += 1
 
@@ -71,15 +76,15 @@ class Codon:
         :param codon: Codon     Codon object with codon counts
         :return: int            total counts (should equal number of input codons)
         -------------------------------------------------------------------------------------------------------------"""
-        self.count = {aa:0 for aa in Codon.aa2codon}
+        self.count = {aa: 0 for aa in Codon.aa2codon}
         n = 0
-        for codon in codon.count:
-            aa = self.codon2aa[codon]
-            self.count[aa] += codon.count[codon]
-            n + codon.count[codon]
+        for thiscodon in codon.count:
+            aa = self.codon2aa[thiscodon]
+            self.count[aa] += codon.count[thiscodon]
+            n += 1
 
+        self.n = n
         return n
-
 
     def update_frequencies(self):
         """-------------------------------------------------------------------------------------------------------------
