@@ -7,14 +7,15 @@ from include.fasta import Fasta
 from codon import Codon
 from collections import defaultdict
 
-def calculate_lr( rf ):
+
+def calculate_lr(rf):
     """-----------------------------------------------------------------------------------------------------------------
     frequencies in rf are the P(codon|frame=coding), if the priors for the three reading
     frames are equal, they factor out and
     P(coding|codon) = P(codon|coding) / (P(codon|coding) + P(codon|f1) + P(codon|f2))
 
     :param rf: list of Codon        counts and frequencies of codons in the three reading frames
-    :return: Codon                  likelihood ration for coding vs noncoding
+    :return: Codon                  likelihood ratio for coding vs noncoding
     -----------------------------------------------------------------------------------------------------------------"""
     result = Codon()
     a = Codon.codon2aa
@@ -28,6 +29,26 @@ def calculate_lr( rf ):
 
     return result
 
+
+def window_average(dna, lr, window=5):
+    """-----------------------------------------------------------------------------------------------------------------
+    sliding window average of the codon score (lr)
+
+    :param dna: string          DNA sequence
+    :param lr: Codon            statistic to average (lr.count)
+    :param window: integer      window size
+    :return: list               elements are of [pos,ave_lr.count]
+    -----------------------------------------------------------------------------------------------------------------"""
+    result = []
+    stat = 0.0
+    for pos in range(0, window * 3, 3):
+        # fill first window
+        codon = dna[pos:pos + 3]
+        stat += lr.count[codon]
+
+        # fill success windows to end
+
+    return result
 
 
 dnafile = 'data/z.tritici.IP0323.reannot.cds.fasta'
