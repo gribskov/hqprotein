@@ -179,7 +179,8 @@ if __name__ == '__main__':
     print(f'\n{coding}')
 
     #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest update frequencies; all values should be 1/64 = 0.016\n{"*"*80}')
+    print(f'\n{"*"*80}\nTest update frequencies\n{"*"*80}')
+    print('Expect all values to be 1/64 = 0.016')
     t1 = Codon()
     for codon in t1.codon2aa:
         t1.count[codon] = 1
@@ -191,6 +192,7 @@ if __name__ == '__main__':
 
     #-----------------------------------------------------------------------------------------------
     print(f'\n{"*"*80}\nTest conversion to family counts\n{"*"*80}')
+    print(f'Expect counts to be the number of codons in the corresponding synonymous codon family.')
     t2 = Codon()
     for codon in t2.codon2aa:
         t2.count[codon] = 1
@@ -200,12 +202,19 @@ if __name__ == '__main__':
     print(t3)
 
     #-----------------------------------------------------------------------------------------------
-    # TODO test division by codon
-
+    print(f'\n{"*"*80}\nTest division of one codon table by another\n{"*"*80}')
+    print(' All values should be 1/synonymous_codon_family_size.')
+    t1 = Codon()
+    for codon in t1.codon2aa:
+        t1.count[codon] = 1
+        t1.n += 1
+    t2 = t1 / t3
+    print(t2)
 
     #-----------------------------------------------------------------------------------------------
     print(f'\n{"*"*80}\nTest division by 2; should match original count\n{"*"*80}')
-    half = coding / 2
+    print(f'Expect values to be 1/2 of size of codon family.')
+    half = t3 / 2
     print(f'{half}')
 
 
