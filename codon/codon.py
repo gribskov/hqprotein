@@ -71,17 +71,19 @@ class Codon:
 
     def add_from_codon(self, codon):
         """-------------------------------------------------------------------------------------------------------------
-        build amino acid (codon family) count from an existing Codon object
+        Build amino acid (codon family) count from an existing Codon object. store the family count in each codon in
+        the family. This makes it simple to divide codon counts by family counts to get codon preference
 
         :param codon: Codon     Codon object with codon counts
         :return: int            total counts (should equal number of input codons)
         -------------------------------------------------------------------------------------------------------------"""
-        self.count = {aa: 0 for aa in Codon.aa2codon}
         n = 0
         for thiscodon in codon.count:
             aa = self.codon2aa[thiscodon]
-            self.count[aa] += codon.count[thiscodon]
-            n += 1
+            for member in Codon.aa2codon[aa]:
+                self.count[member] += codon.count[thiscodon]
+
+            n += codon.count[thiscodon]
 
         self.n = n
         return n
