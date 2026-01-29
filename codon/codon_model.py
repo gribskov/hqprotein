@@ -10,30 +10,33 @@ from collections import defaultdict
 dnafile = 'data/z.tritici.IP0323.reannot.cds.fasta'
 cds = Fasta(filename=dnafile)
 
-# ref holds the codon information for the three reading frames
+# rf holds the codon information for the three reading frames
 rf = [Codon(), Codon(), Codon()]
 
 seq_n = 0
 while cds.next():
+    # sum codon usage over all CDS sequences for all three reading frames
     seq_n += 1
     print(f'{seq_n}\t{cds.id}')
     for frame in range(3):
+        # codon counts for all three frames, includes stop codons
         rf[frame].add_from_dna(cds.seq, frame)
 
     if seq_n > 10:
         break
 
 for frame in range(3):
+    # calculate codon frequencies from counts, all three reading frames
     print(f'frame: {frame}\tcodons: {rf[frame].n}')
     rf[frame].update_frequencies()
 
-aacount = [Codon(), Codon(), Codon()]
+familycount = [Codon(), Codon(), Codon()]
 for frame in range(3):
-    aacount[frame].add_from_codon(rf[frame])
+    familycount[frame].add_from_codon(rf[frame])
 
-# for aa in sorted(aa2codon):
-#     print(f'{aa}\t{aa2codon[aa]}')
-#     for codon in sorted(aa2codon[aa]):
-#         print(f'\t{codon}\t{rf[0].frequency[codon]:.4f}')
+preference = []
+for frame in range(3):
+    # codon preference for all three frames
+    preference.append(rf[frame] / familycount[frame])
 
 exit(0)
