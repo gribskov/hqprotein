@@ -66,15 +66,34 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
+                result.n = sum(result.count.values())
             return result
         elif isinstance(denom, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom
+                result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown denominator type
         return NotImplemented
+
+    def __str__(self):
+        """-------------------------------------------------------------------------------------------------------------
+        string representation
+        :return: str
+        -------------------------------------------------------------------------------------------------------------"""
+        out = f'{self.n:.3f} observations\n'
+        for b0 in 'ACGT':
+            for b1 in 'ACTG':
+                for b2 in 'ACTG':
+                    codon = f'{b0}{b1}{b2}'
+                    out += f'   {codon} {self.count[codon]:6.3f} '
+                out += '\n'
+            out += '\n'
+
+        return out
+
 
     def add_from_dna(self, dna, frame=0):
         """-------------------------------------------------------------------------------------------------------------
@@ -154,14 +173,18 @@ if __name__ == '__main__':
 
     codon_n = coding.add_from_dna(seq)
     print(f'\texpect {len(seq) // 3} codons. codons read: {codon_n}')
+    print(f'\n{coding}')
 
     codon_n += coding.add_from_dna(seq)
     print(f'\tRead second time, expect {len(seq) // 3 * 2} codons. ', end='')
     print(f'codons read: {codon_n}\tcount({lastcodon}): {coding.count[lastcodon]}')
+    print(f'\n{coding}')
 
-# TODO test update_frequencies
-# TODO test division by codon
-# TODO test division by int
+    # TODO test update_frequencies
+    # TODO test division by codon
+    half = coding / 3
+    print(f'\n{half}')
+    # TODO test division by int
 
 
     exit(0)
