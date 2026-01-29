@@ -15,6 +15,7 @@ class Codon:
     -----------------------------------------------------------------------------------------------------------------"""
     # class variables
     # noinspection DuplicatedCode
+    # Carefully proofread, earlier version had TAT as a T codon instead of Y
     codon2aa = {"AAA": "K", "AAC": "N", "AAG": "K", "AAT": "N",
                 "ACA": "T", "ACC": "T", "ACG": "T", "ACT": "T",
                 "AGA": "R", "AGC": "S", "AGG": "R", "AGT": "S",
@@ -30,7 +31,7 @@ class Codon:
                 "GGA": "G", "GGC": "G", "GGG": "G", "GGT": "G",
                 "GTA": "V", "GTC": "V", "GTG": "V", "GTT": "V",
 
-                "TAA": "*", "TAC": "Y", "TAG": "*", "TAT": "T",
+                "TAA": "*", "TAC": "Y", "TAG": "*", "TAT": "Y",
                 "TCA": "S", "TCC": "S", "TCG": "S", "TCT": "S",
                 "TGA": "*", "TGC": "C", "TGG": "W", "TGT": "C",
                 "TTA": "L", "TTC": "F", "TTG": "L", "TTT": "F"}
@@ -48,11 +49,13 @@ class Codon:
         self.n = 0
 
         # construct aa2codon from codon2aa
-        for codon in Codon.codon2aa:
-            aa = Codon.codon2aa[codon]
-            if aa not in Codon.aa2codon:
-                Codon.aa2codon[aa] = []
-            Codon.aa2codon[aa].append(codon)
+        if not Codon.aa2codon:
+            # only construct aa2codon for first instance
+            for codon in Codon.codon2aa:
+                aa = Codon.codon2aa[codon]
+                if aa not in Codon.aa2codon:
+                    Codon.aa2codon[aa] = []
+                Codon.aa2codon[aa].append(codon)
 
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
@@ -80,19 +83,19 @@ class Codon:
 
     def __str__(self):
         """-------------------------------------------------------------------------------------------------------------
-        string representation
+        string representation. Prints in the traditional format for the codon table.
         :return: str
         -------------------------------------------------------------------------------------------------------------"""
         out = f'{self.n:.3f} observations\n'
-        for b0 in 'ACGT':
-            for b1 in 'ACTG':
-                for b2 in 'ACTG':
-                    codon = f'{b0}{b1}{b2}'
-                    out += f'   {codon} {self.count[codon]:6.3f} '
+        for b0 in 'TCAG':
+            for b1 in 'TCAG':
+                for b2 in 'TCAG':
+                    codon = f'{b0}{b2}{b1}'
+                    out += f'   {codon} {self.codon2aa[codon]} {self.count[codon]:6.3f} '
                 out += '\n'
             out += '\n'
 
-        return out
+        return out.rstrip()
 
 
     def add_from_dna(self, dna, frame=0):
@@ -148,7 +151,7 @@ class Codon:
 # Testing
 # ######################################################################################################################
 if __name__ == '__main__':
-    print(f'Read codons of coding frame from DNA')
+    print(f'\n{"*"*80}\nRead codons of coding frame from DNA\n{"*"*80}')
     coding = Codon()
 
     seq = '''ATGAGGTTCCACGTTCATTCGACGCCATTCTACCAACGCATAGCCTGCAACACCACATCGACCATCACTG
@@ -169,22 +172,41 @@ if __name__ == '__main__':
              ACACAGAGCGATATCGTGGCGACTTGA'''
     seq = seq.replace('\n', '').replace(' ', '')
     lastcodon = seq[-3:len(seq)]
-    print(f'\tSequence is {len(seq)} bases long and ends in {lastcodon}')
+    print(f'Sequence is {len(seq)} bases long and ends in {lastcodon}')
 
     codon_n = coding.add_from_dna(seq)
-    print(f'\texpect {len(seq) // 3} codons. codons read: {codon_n}')
+    print(f'expect {len(seq) // 3} codons, and no stop codons except {lastcodon}.')
     print(f'\n{coding}')
 
-    codon_n += coding.add_from_dna(seq)
-    print(f'\tRead second time, expect {len(seq) // 3 * 2} codons. ', end='')
-    print(f'codons read: {codon_n}\tcount({lastcodon}): {coding.count[lastcodon]}')
-    print(f'\n{coding}')
+    #-----------------------------------------------------------------------------------------------
+    print(f'\n{"*"*80}\nTest update frequencies; all values should be 1/64 = 0.016\n{"*"*80}')
+    t1 = Codon()
+    for codon in t1.codon2aa:
+        t1.count[codon] = 1
+        t1.n += 1
+    t1.update_frequencies()
+    for codon in t1.codon2aa:
+        t1.count[codon] = t1.frequency[codon]
+    print(t1)
 
-    # TODO test update_frequencies
+    #-----------------------------------------------------------------------------------------------
+    print(f'\n{"*"*80}\nTest conversion to family counts\n{"*"*80}')
+    t2 = Codon()
+    for codon in t2.codon2aa:
+        t2.count[codon] = 1
+        t2.n += 1
+    t3 = Codon()
+    t3.add_from_codon(t2)
+    print(t3)
+
+    #-----------------------------------------------------------------------------------------------
     # TODO test division by codon
-    half = coding / 3
-    print(f'\n{half}')
-    # TODO test division by int
+
+
+    #-----------------------------------------------------------------------------------------------
+    print(f'\n{"*"*80}\nTest division by 2; should match original count\n{"*"*80}')
+    half = coding / 2
+    print(f'{half}')
 
 
     exit(0)
