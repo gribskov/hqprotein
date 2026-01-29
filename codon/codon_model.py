@@ -27,12 +27,9 @@ for frame in range(3):
     print(f'frame: {frame}\tcodons: {rf[frame].n}')
     rf[frame].update_frequencies()
 
-aacount = []
-frame = 0
-aacount[frame] = Codon()
-aacount[frame].add_from_codon(rf[0])
-
-
+aacount = [Codon(), Codon(), Codon()]
+for frame in range(3):
+    aacount[frame].add_from_codon(rf[frame])
 
 # for aa in sorted(aa2codon):
 #     print(f'{aa}\t{aa2codon[aa]}')
