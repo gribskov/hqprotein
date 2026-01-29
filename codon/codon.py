@@ -53,6 +53,28 @@ class Codon:
                 Codon.aa2codon[aa] = []
             Codon.aa2codon[aa].append(codon)
 
+    def __truediv__(self, denom):
+        """-------------------------------------------------------------------------------------------------------------
+        overload / operator.
+        currently supports division by another instance of Codon, int, or float
+
+        :param denom: various       denominator for division
+        :return: Codon              new codon with result of division
+        -------------------------------------------------------------------------------------------------------------"""
+        if isinstance(denom, Codon):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] / denom.count[codon]
+            return result
+        elif isinstance(denom, (int, float)):
+            result = Codon()
+            for codon in self.count:
+                result.count[codon] = self.count[codon] / denom.count[codon]
+        return result
+
+        # only reach here for unknown denominator type
+        return NotImplemented
+
     def add_from_dna(self, dna, frame=0):
         """-------------------------------------------------------------------------------------------------------------
         Add the codon counts from a DNA sequence in fasta format to the current count
