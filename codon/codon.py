@@ -12,8 +12,9 @@ class Codon:
     codon2aa - class variable with standard codon definitions stored as dict
     aa2codon - class variable with list of codons for each one-letter amino acid residue, aa2codon can be populated
                from codon2aa so only codon2aa needs to be defined.
-               TODO add method to populate aa2codon
     -----------------------------------------------------------------------------------------------------------------"""
+    # class variables
+    # noinspection DuplicatedCode
     codon2aa = {"AAA": "K", "AAC": "N", "AAG": "K", "AAT": "N",
                 "ACA": "T", "ACC": "T", "ACG": "T", "ACT": "T",
                 "AGA": "R", "AGC": "S", "AGG": "R", "AGT": "S",
@@ -42,38 +43,34 @@ class Codon:
             count: integer count of each defined symbol (codon or AA, for instance)
             n: sum of counts for all symbols
         -------------------------------------------------------------------------------------------------------------"""
-        self.count = {c: 0 for c in Codon.codon2aa}
-        self.frequency = {c: 0 for c in Codon.codon2aa}
+        self.count = {c: 0.0 for c in Codon.codon2aa}
+        self.frequency = {c: 0.0 for c in Codon.codon2aa}
         self.n = 0
 
-        if not Codon.aa2codon:
-            # construct aa2codon from codon2aa, it's a class variable so it may already be defined
-            for codon in Codon.codon2aa:
-                aa = Codon.codon2aa[codon]
-                if aa not in Codon.aa2codon:
-                    Codon.aa2codon[aa] = []
-                Codon.aa2codon[aa].append(codon)
+        # construct aa2codon from codon2aa
+        for codon in Codon.codon2aa:
+            aa = Codon.codon2aa[codon]
+            if aa not in Codon.aa2codon:
+                Codon.aa2codon[aa] = []
+            Codon.aa2codon[aa].append(codon)
 
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
         overload / operator.
         currently supports division by another instance of Codon, int, or float
 
-        :param denom: various       denominator for division
+        :param denom: various       denominator for division, Codon, int, and float supported
         :return: Codon              new codon with result of division
         -------------------------------------------------------------------------------------------------------------"""
         if isinstance(denom, Codon):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
-                result.n += result.count[codon]
             return result
-
         elif isinstance(denom, (int, float)):
             result = Codon()
             for codon in self.count:
-                result.count[codon] = self.count[codon] / denom.count[codon]
-                result.n += result.count[codon]
+                result.count[codon] = self.count[codon] / denom
             return result
 
         # only reach here for unknown denominator type
@@ -87,7 +84,6 @@ class Codon:
         :param frame: int       reading frame to use, 0 indicates start with base 0
         :return: int            number of codons added
         -------------------------------------------------------------------------------------------------------------"""
-        start = frame
         dna = dna.upper()
         for start in range(frame, len(dna) - 2, 3):
             self.n += 1
@@ -162,5 +158,7 @@ if __name__ == '__main__':
     codon_n += coding.add_from_dna(seq)
     print(f'\tRead second time, expect {len(seq) // 3 * 2} codons. ', end='')
     print(f'codons read: {codon_n}\tcount({lastcodon}): {coding.count[lastcodon]}')
+
+
 
     exit(0)
