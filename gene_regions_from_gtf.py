@@ -8,7 +8,7 @@ should work for other features
 ====================================================================================================================="""
 from collections import defaultdict
 from fasta import Fasta
-from gff2 import *
+from include.gff2 import *
 
 ####################################################################################################
 # Main
