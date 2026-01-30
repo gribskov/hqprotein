@@ -46,7 +46,13 @@ def window_average(dna, lr, window=5):
         codon = dna[pos:pos + 3]
         stat += lr.count[codon]
 
-        # fill success windows to end
+        # fill successive windows to end
+        for pos in range(window, len(dna) - window, 3):
+            result.append([pos / 3, stat / window])
+            stat -= dna[pos - window:pos - window + 3]
+            stat += dna[pos:pos + window]
+
+        result.append([pos / 3, stat / window])
 
     return result
 
