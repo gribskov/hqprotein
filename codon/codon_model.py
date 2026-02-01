@@ -14,6 +14,7 @@ def calculate_lr(rf):
     frequencies in rf are the P(codon|frame=coding), if the priors for the three reading
     frames are equal, they factor out and
     P(coding|codon) = P(codon|coding) / (P(codon|coding) + P(codon|f1) + P(codon|f2))
+    this is the likelihood ratio of coding vs all frames
 
     :param rf: list of Codon        counts and frequencies of codons in the three reading frames
     :return: Codon                  likelihood ratio for coding vs noncoding
@@ -26,7 +27,7 @@ def calculate_lr(rf):
     psum += rf[2] / rf[2].n
 
     result = coding / psum
-    psum.update_frequencies()
+    result /= result.n
 
     return result
 
@@ -144,7 +145,7 @@ TTTGTGGAAGGAGGGGATGAGGGGAGGGGTGAAGGTACAGTATTGA""".replace('\n', '')
 # ===================================================================================================
 # Main
 # ===================================================================================================
-dnafile = 'data/z.tritici.IP0323.reannot.cds.fasta'
+dnafile = '../data/z.tritici.IP0323.reannot.cds.fasta'
 cds = Fasta(filename=dnafile)
 
 # rf holds the codon information for the three reading frames
@@ -159,25 +160,24 @@ while cds.next():
         # codon counts for all three frames, includes stop codons
         rf[frame].add_from_dna(cds.seq, frame)
 
-    if seq_n > 100:
-        break
+    # if seq_n > 100:
+    #     break
 
+# calculate codon frequencies and codon preference from counts, all three reading frames
+familycount = []
 for frame in range(3):
-    # calculate codon frequencies from counts, all three reading frames
-    print(f'frame: {frame}\tcodons: {rf[frame].n}')
-    rf[frame].update_frequencies()
-
-familycount = [Codon(), Codon(), Codon()]
-for frame in range(3):
-    # calculate frequenccy of codon families in all three frames
-    familycount[frame].add_from_codon(rf[frame])
+    # calculate frequency of codon families in all three frames
+    familycount.append(rf[frame].family())
 
 preference = []
 for frame in range(3):
     # codon preference for all three frames
     preference.append(rf[frame] / familycount[frame])
 
-lr = calculate_lr(rf)
+for frame in range(3):
+    print(preference[frame])
+
+lr = calculate_lr(preference)
 print(f'sequence is {len(dna)} bases long')
 # delete one base to create frameshift
 half = len(dna) // 2
