@@ -1,5 +1,8 @@
 """=====================================================================================================================
 codon.py implements the Codon class which is used to manipulate codon usage/frequency tables
+exits with status == 0 if file opening fails
+
+Summary
 
 # create a codon usage table from DNA sequence, frame 0
 # this gets the raw counts. frame is optional, defaults to zero (start at first base in sequence)
@@ -23,6 +26,7 @@ prior += 1
 
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
+import sys
 
 
 class Codon:
@@ -206,6 +210,81 @@ class Codon:
         result.n = n
         return result
 
+    def to_file(self, filename, fieldwidth=6, decimal=3, sep='  '):
+        """-------------------------------------------------------------------------------------------------------------
+        save codon table to file. Codons are ordered in the same traditional order as in __str__(). Lines of 4 codons
+        codon}:{self.count[codon]:{fieldwidth}.{decimal}f}{sep}
+        there is no sep string after the final codon
+
+        :param filename: string     path to file to save codon table
+        :param fieldwidth: int      fieldwidth for formatting codon count
+        :param decimal: int         number of decimal places to show
+        :param sep: string          separator between codons
+        :return: None
+        -------------------------------------------------------------------------------------------------------------"""
+        fh = Codon.opensafe(filename, 'w', __name__)
+
+        for b0 in 'TCAG':
+            for b1 in 'TCAG':
+                out = ''
+                for b2 in 'TCAG':
+                    codon = f'{b0}{b2}{b1}'
+                    out += f'{codon}:{self.count[codon]:{fieldwidth}.{decimal}f}{sep}'
+
+                out += '\n'
+                out.replace(f'{sep}\n', '\n')
+                fh.write(out)
+
+        fh.close()
+        return None
+
+    def from_file(self, filename, sep='  '):
+        """-------------------------------------------------------------------------------------------------------------
+        Read a codon table written by Codon.to_file().
+        sep must be the same that file was written with because it is used to split the codons in each line
+
+        :param filename: string     path to file to read codon table
+        :param sep: string          separator between codon fields in file
+        :return: int                number of codons read, should be 64
+        -------------------------------------------------------------------------------------------------------------"""
+        fh = Codon.opensafe(filename, 'r', __name__)
+
+        codon_n = 0
+        for line in fh:
+            line = line.rstrip()
+            if not line:
+                continue
+            fields = line.split(sep)
+            for field in fields:
+                codon, count = field.split(':')
+                count = float(count)
+                self.count[codon] = count
+                self.n += count
+                codon_n += 1
+
+        fh.close()
+        return codon_n
+
+    @staticmethod
+    def opensafe(filename, mode='u', source_method='unknown'):
+        """-------------------------------------------------------------------------------------------------------------
+        Status = 1 if filename cannot be opened
+
+        :param filename: string         path to file to save codon table
+        :param mode: string             file mode
+        :param source_method: string    name of the calling program for use in error messages
+        :return: filehandle
+        -------------------------------------------------------------------------------------------------------------"""
+        modestr = {'r': 'reading', 'w': 'writing', 'u': 'unknown'}
+        fh = None
+        try:
+            fh = open(filename, mode)
+        except (IOError, OSError):
+            sys.stderr.write(f'{source_method}: Error opening {filename} for {modestr[mode]}\n')
+            exit(1)
+
+        return fh
+
 
 # ######################################################################################################################
 # Testing
@@ -294,5 +373,19 @@ if __name__ == '__main__':
     print(f'Expect values to be 2, observations = 128.')
     half = t3 / 2
     print(f'{half}')
+
+    # -----------------------------------------------------------------------------------------------
+    testfile = 'codon.write.test.text'
+    print(f'\n{"*" * 80}\nFile writing: write to {testfile}\n{"*" * 80}')
+    tw = Codon()
+    tw.add_from_dna(seq)
+    print(f'writing to {testfile}')
+    print(tw)
+    tw.to_file(testfile)
+
+    tr = Codon()
+    print(f'\nreading from {testfile}')
+    tr.from_file(testfile)
+    print(tr)
 
     exit(0)
