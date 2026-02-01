@@ -1,6 +1,23 @@
 """=====================================================================================================================
-# codon.py
-#
+codon.py implements the Codon class which is used to manipulate codon usage/frequency tables
+
+# create a codon usage table from DNA sequence, frame 0
+# this gets the raw counts. frame is optional, defaults to zero (start at first base in sequence)
+codon_usage = Codon()
+codon_usage.add_from_dna(dnaseq, frame=0)
+
+# codon usage as fraction of total codon, i.e., P(codon|frame). The frequencies are stored in the count attribute
+codon_frequency = codon_usage / codon_usage.n
+
+# add plus 1 prior to codon counts
+codon_usage += 1
+
+# calculate codon preference (frequencies of codons within each family).. The frequencies are stored in the count
+# attribute
+family_count = codon_usage.add_from_codon()
+preference = codon_usage / family_count
+
+
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
 
@@ -59,12 +76,13 @@ class Codon:
 
     def __add__(self, addend):
         """-------------------------------------------------------------------------------------------------------------
+        Add two codon objects
         overload + operator. codon + 1 or codon1 + codon2
         currently supports addition by another instance of Codon, int, or float
         returns a new Codon object
 
-        :param addend: various       addendinator for division, Codon, int, and float supported
-        :return: Codon              new codon with result of division
+        :param addend: various       addend for addition, Codon, int, and float supported
+        :return: Codon              new codon with result of addition
         -------------------------------------------------------------------------------------------------------------"""
         if isinstance(addend, Codon):
             result = Codon()
@@ -84,12 +102,13 @@ class Codon:
 
     def __radd__(self, addend):
         """-------------------------------------------------------------------------------------------------------------
+        Add two codon objects
         overload + operator with the Codon object on the right side, i.e., 1 + codon
         currently supports addition by another instance of Codon, int, or float
         returns a new Codon object
 
-        :param addend: various       addendinator for division, Codon, int, and float supported
-        :return: Codon              new codon with result of division
+        :param addend: various       addend for addition, Codon, int, and float supported
+        :return: Codon              new codon with result of addition
         -------------------------------------------------------------------------------------------------------------"""
         if isinstance(addend, Codon):
             result = Codon()
@@ -109,6 +128,7 @@ class Codon:
 
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
+        divide one codon table by another, or by a constant
         overload / operator.
         currently supports division by another instance of Codon, int, or float
         returns a new Codon object
@@ -148,7 +168,6 @@ class Codon:
 
         return out.rstrip()
 
-
     def add_from_dna(self, dna, frame=0):
         """-------------------------------------------------------------------------------------------------------------
         Add the codon counts from a DNA sequence in fasta format to the current count
@@ -167,7 +186,8 @@ class Codon:
     def add_from_codon(self, codon):
         """-------------------------------------------------------------------------------------------------------------
         Build amino acid (codon family) count from an existing Codon object. store the family count in each codon in
-        the family. This makes it simple to divide codon counts by family counts to get codon preference
+        the family. This makes it simple to divide codon counts by family counts to get codon preference.
+        TODO return new Codon object
 
         :param codon: Codon     Codon object with codon counts
         :return: int            total counts (should equal number of input codons)
@@ -185,6 +205,8 @@ class Codon:
 
     def update_frequencies(self):
         """-------------------------------------------------------------------------------------------------------------
+        DEPRECATED use division instead
+        TODO delete
         Using the current count and n, calculate the frequency of each codon, P(codon|dna_seq)
         frequency is stored in self.frequency
         Use the returned sum of the frequencies to check for errors (such as incorrect number  of codons, self.b)
@@ -202,7 +224,7 @@ class Codon:
 # Testing
 # ######################################################################################################################
 if __name__ == '__main__':
-    print(f'\n{"*"*80}\nRead codons of coding frame from DNA\n{"*"*80}')
+    print(f'\n{"*" * 80}\nRead codons of coding frame from DNA\n{"*" * 80}')
     coding = Codon()
 
     seq = '''ATGAGGTTCCACGTTCATTCGACGCCATTCTACCAACGCATAGCCTGCAACACCACATCGACCATCACTG
@@ -229,8 +251,8 @@ if __name__ == '__main__':
     print(f'expect {len(seq) // 3} codons, and no stop codons except {lastcodon}.')
     print(f'\n{coding}')
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest update frequencies\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest update frequencies\n{"*" * 80}')
     print('Expect all values to be 1/64 = 0.016')
     t1 = Codon()
     for codon in t1.codon2aa:
@@ -241,8 +263,8 @@ if __name__ == '__main__':
         t1.count[codon] = t1.frequency[codon]
     print(t1)
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest conversion to family counts\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest conversion to family counts\n{"*" * 80}')
     print(f'Expect counts to be the number of codons in the corresponding synonymous codon family.')
     t2 = Codon()
     for codon in t2.codon2aa:
@@ -252,8 +274,8 @@ if __name__ == '__main__':
     t3.add_from_codon(t2)
     print(t3)
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest division of one codon table by another\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest division of one codon table by another\n{"*" * 80}')
     print(' All values should be 1/synonymous_codon_family_size.')
     t1 = Codon()
     for codon in t1.codon2aa:
@@ -278,11 +300,10 @@ if __name__ == '__main__':
     print('\nt3 = t1 + t2; All values should be 4')
     print(t3)
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest division by 2; should match original count\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest division by 2; should match original count\n{"*" * 80}')
     print(f'Expect values to be 1/2 of size of codon family.')
     half = t3 / 2
     print(f'{half}')
-
 
     exit(0)
