@@ -174,10 +174,10 @@ for frame in range(3):
     # codon preference for all three frames
     preference.append(rf[frame] / familycount[frame])
 
-for frame in range(3):
-    print(preference[frame])
+# for frame in range(3):
+#     print(preference[frame])
 
-lr = calculate_lr(preference)
+lr = calculate_lr(rf)
 print(f'sequence is {len(dna)} bases long')
 # delete one base to create frameshift
 half = len(dna) // 2
