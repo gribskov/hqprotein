@@ -91,13 +91,13 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(addend, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown addend type
@@ -117,13 +117,13 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(addend, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown addend type
@@ -143,13 +143,13 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(denom, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown denominator type
@@ -206,22 +206,6 @@ class Codon:
         result.n = n
         return result
 
-    def update_frequencies(self):
-        """-------------------------------------------------------------------------------------------------------------
-        DEPRECATED use division instead
-        TODO delete
-        Using the current count and n, calculate the frequency of each codon, P(codon|dna_seq)
-        frequency is stored in self.frequency
-        Use the returned sum of the frequencies to check for errors (such as incorrect number  of codons, self.b)
-
-        :return: float      sum of frequency, should be 1.0
-        -------------------------------------------------------------------------------------------------------------"""
-        count = self.count
-        n = self.n
-        self.frequency = {c: count[c] / n for c in count}
-
-        return sum(self.frequency.values())
-
 
 # ######################################################################################################################
 # Testing
@@ -273,42 +257,41 @@ if __name__ == '__main__':
     print(t2)
     # print family sums
     print('\nCumulative counts by codon family (family, family size, count)')
-    sum = 0
+    total_count = 0
     for aa in Codon.aa2codon:
         family = Codon.aa2codon[aa]
         for codon in family:
-            sum += t2.count[codon]
-        print(f'\t{aa}\t{len(family)}\t{sum}')
+            total_count += t2.count[codon]
+        print(f'\t{aa}\t{len(family)}\t{total_count}')
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest division of one codon table by another\n{"*" * 80}')
     print(' All values should be 1/synonymous_codon_family_size.')
     t1 = Codon()
-    for codon in t1.codon2aa:
-        t1.count[codon] = 1
-        t1.n += 1
-    t2 = t1 / t3
-    print(t2)
+    t1 += 1
+
+    t3 = t1 / t2
+    print(t3)
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest addition\n{"*" * 80}')
 
     t1 = Codon()
     t1 += 1
-    print('t1 += 1; All values should be 1')
+    print('t1 += 1; All values should be 1, observations=64')
     print(t1)
 
     t2 = 2 + t1
-    print('\nt2 = 2 + t1; All values should be 3')
+    print('\nt2 = 2 + t1; All values should be 3, observations=192')
     print(t2)
 
     t3 = t1 + t2
-    print('\nt3 = t1 + t2; All values should be 4')
+    print('\nt3 = t1 + t2; All values should be 4, observations = 256')
     print(t3)
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest division by 2; should match original count\n{"*" * 80}')
-    print(f'Expect values to be 1/2 of size of codon family.')
+    print(f'Expect values to be 2, observations = 128.')
     half = t3 / 2
     print(f'{half}')
 
