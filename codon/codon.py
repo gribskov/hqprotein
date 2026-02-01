@@ -24,6 +24,14 @@ preference = codon_usage / family_count
 prior = Codon()
 prior += 1
 
+# reading from and writing to file
+tw = Codon()
+    tw.add_from_dna(seq)
+    tw.to_file(testfile)
+
+    tr = Codon()
+    tr.from_file(testfile)
+
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
 import sys
