@@ -41,9 +41,15 @@ with ORFs. The canonical GT|AG found at the beginning|end of introns should
 work, but what abut noncanonical splice sites?  GC|AG and AT|AC make 
 up 0.89% and 0.10% of splices sites in human, respectively (species specific). 
   > Parada GE, Munita R, Cerda CA, Gysling K. A comprehensive survey of non-canonical splice sites in the human transcriptome. Nucleic Acids Res. 2014;42(16):10564-78. doi: 10.1093/nar/gku744.
-
+* For detecting fusions and splitting, interpro motifs can be used. Tabulate which motifs are likely to be
+found together or not.
 ## Approach
-My hand-wavy idea is to calculate a posterior probability of coding on a 
+1. My hand-wavy idea is to calculate a posterior probability of coding on a 
 base-by-base or codon-by-codon basis to identify ORFs or parts of ORFs that are
 most likely to be coding.
 Another possibility would be to train an ML model.
+2. Could use a hidden markov model where the match probabilities are drawn from aligned homologous sequence.
+Positions could be weighted by the fraction of related sequence that match to the bases. This information
+can be combined with coding probability based on codon usage, and probability of switching reading frame
+based on splice donor/acceptor sequence. Calculating the background probabilities are hard, I guess either
+random real sequences or randomized sequences preserving 2mer or 3mer frequencies.
