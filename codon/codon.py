@@ -17,6 +17,9 @@ codon_usage += 1
 family_count = codon_usage.add_from_codon()
 preference = codon_usage / family_count
 
+# make a table with a constant value = 1
+prior = Codon()
+prior += 1
 
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
@@ -183,25 +186,25 @@ class Codon:
 
         return self.n
 
-    def add_from_codon(self, codon):
+    def family(self):
         """-------------------------------------------------------------------------------------------------------------
         Build amino acid (codon family) count from an existing Codon object. store the family count in each codon in
         the family. This makes it simple to divide codon counts by family counts to get codon preference.
-        TODO return new Codon object
 
-        :param codon: Codon     Codon object with codon counts
-        :return: int            total counts (should equal number of input codons)
+        :return: Codon          new Codon with counts of family stored in each docon
         -------------------------------------------------------------------------------------------------------------"""
         n = 0
-        for thiscodon in codon.count:
+        result = Codon()
+        for thiscodon in Codon.codon2aa:
             aa = self.codon2aa[thiscodon]
             for member in Codon.aa2codon[aa]:
-                self.count[member] += codon.count[thiscodon]
+                # add counts for each member of the codon family to each member
+                result.count[thiscodon] += self.count[member]
 
-            n += codon.count[thiscodon]
+            n += result.count[thiscodon]
 
-        self.n = n
-        return n
+        result.n = n
+        return result
 
     def update_frequencies(self):
         """-------------------------------------------------------------------------------------------------------------
@@ -252,27 +255,30 @@ if __name__ == '__main__':
     print(f'\n{coding}')
 
     # -----------------------------------------------------------------------------------------------
-    print(f'\n{"*" * 80}\nTest update frequencies\n{"*" * 80}')
+    print(f'\n{"*" * 80}\nTest conversion to frequencies\n{"*" * 80}')
     print('Expect all values to be 1/64 = 0.016')
+    # test data is table with one count for each codon
     t1 = Codon()
-    for codon in t1.codon2aa:
-        t1.count[codon] = 1
-        t1.n += 1
-    t1.update_frequencies()
-    for codon in t1.codon2aa:
-        t1.count[codon] = t1.frequency[codon]
-    print(t1)
+    t1 += 1
+
+    t2 = t1 / t1.n
+    print(t2)
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest conversion to family counts\n{"*" * 80}')
-    print(f'Expect counts to be the number of codons in the corresponding synonymous codon family.')
-    t2 = Codon()
-    for codon in t2.codon2aa:
-        t2.count[codon] = 1
-        t2.n += 1
-    t3 = Codon()
-    t3.add_from_codon(t2)
-    print(t3)
+    print(f'Expect counts to be the number of codons in the corresponding synonymous codon family. Total count = 244')
+    t1 = Codon()
+    t1 += 1
+    t2 = t1.family()
+    print(t2)
+    # print family sums
+    print('\nCumulative counts by codon family (family, family size, count)')
+    sum = 0
+    for aa in Codon.aa2codon:
+        family = Codon.aa2codon[aa]
+        for codon in family:
+            sum += t2.count[codon]
+        print(f'\t{aa}\t{len(family)}\t{sum}')
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest division of one codon table by another\n{"*" * 80}')
