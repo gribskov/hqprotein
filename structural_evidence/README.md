@@ -24,12 +24,15 @@ This relationship becomes our structural evidence signal for the Bayesian integr
 - Usable tool release: pipeline that takes GFF + genome and returns per-gene structural quality scores
 - Biological insight: do certain gene categories (secreted, membrane, orphans) behave differently?
 
+
+
+### Segment-level scoring (vs whole-model)
+
 Davison et al. 2025 (bioRxiv 10.1101/2025.10.21.683479) showed pLDDT works
 for 2 fungi + 1 protist but only as proof-of-concept, no multi-evidence integration,
 no controlled corruption, no cross-phylum analysis. They also only scored whole
 protein models — no segment-level analysis (see below).
 
-### Segment-level scoring (vs whole-model)
 Davison et al. always ran AlphaFold on the full translated protein. We want to
 also try short segments (individual exons, sliding windows) to:
 - Localize errors: "exon 4 doesn't fold" is more useful than "the whole model scores low"
