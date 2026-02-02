@@ -28,7 +28,7 @@ See Davison et al. 2025 (bioRxiv 10.1101/2025.10.21.683479) — they showed pLDD
 for 2 fungi + 1 protist but only as proof-of-concept, no multi-evidence integration,
 no controlled corruption, no cross-phylum analysis.
 
-### Organism panel
+### Candidates 
 
 | Organism | Phylum | Data quality |
 |---|---|---|
