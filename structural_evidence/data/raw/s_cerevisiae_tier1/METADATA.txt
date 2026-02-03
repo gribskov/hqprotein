@@ -1,0 +1,35 @@
+Saccharomyces cerevisiae S288C
+==============================
+
+Source: SGD (Saccharomyces Genome Database)
+URL: https://www.yeastgenome.org
+Release: R64-5-1 (2024-05-29)
+Strain: S288C (ATCC 204508)
+Assembly: GCF_000146045.2
+
+genome/
+  S288C_reference_sequence_R64-5-1_20240529.fsa.gz    Genome FASTA (16 chr + mt)
+  saccharomyces_cerevisiae_R64-5-1_20240529.gff.gz    Gene annotations GFF3
+  orf_trans_all_R64-5-1_20240529.fasta.gz             Protein sequences
+  orf_coding_all_R64-5-1_20240529.fasta.gz            CDS nucleotide sequences
+  gene_association_R64-5-1_20240529.sgd               GO annotations
+  rna_coding_R64-5-1_20240529.fasta.gz                RNA genes
+  other_features_genomic_R64-5-1_20240529.fasta.gz    Other genomic features
+  NotFeature_R64-5-1_20240529.fasta.gz                Intergenic sequences
+
+alphafold/
+  UP000002311_559292_YEAST_v6.tar                     AlphaFold structures
+  Source: https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/
+  UniProt proteome: UP000002311
+  Structures: 6,055 proteins (CIF + PDB formats)
+  pLDDT scores in B-factor column
+
+Gene counts:
+  Total ORFs: 6,722
+  Verified: ~4,973
+  Uncharacterized: ~500-570
+  Dubious: ~660-810
+
+GFF3 includes orf_classification tag (Verified/Uncharacterized/Dubious)
+
+Downloaded: 2025-02-02
