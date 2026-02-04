@@ -37,6 +37,24 @@ Some of the most fundamental work in this are was done by Roger Staden.
 > 
 > Staden R. Finding protein coding regions in genomic sequences. Methods Enzymol. 1990;183:163-80. doi: 10.1016/0076-6879(90)83012-x.
 
+### Similar efforts that integrate exon prediction and protein comparison
+* helixer
+  * https://github.com/usadellab/Helixer
+* spaln
+  * https://github.com/ogotoh/spaln
+  > Iwata, H. and Gotoh, O. Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic Acids Research 40 (20) e161 (2012)
+  >
+  > Gotoh, O. Homology-based gene structure prediction: simplified matching algorithm using a translated codon (tron) and improved accuracy by allowing for long gaps. Bioinformatics 16 (3) 190-202 (2000)
+  >
+  > Gotoh, O. Cooperation of Spaln and Prrn5 for construction of gene-structure-aware multiple sequence alignment. In: Katoh K. (eds) Multiple Sequence Alignment. Methods in Molecular Biology 2231, Humana, New York, NY. (2021).
+  >
+  > Gotoh, O. Spaln3: improvement in speed and accuracy of genome mapping and spliced alignment of protein query sequences Bioinformatics 40 (8) btae517 (2024).
+* GenomeThreader &mdash; last update around 2020
+  * https://genomethreader.org/
+  * paper: https://genomethreader.org/doc/GreBreSpaKur2005.pdf
+* MetaEuk
+  * https://github.com/soedinglab/metaeuk
+    > Levy Karin E, Mirdita M and Soeding J. MetaEuk – sensitive, high-throughput gene discovery and annotation for large-scale eukaryotic metagenomics. Microbiome. 2020; 8:48
 ## Possible information to include
 For simplicity, we can discuss coding reading frames, **cORFs**, noncoding reading
 frames that overlap a cORF, **oORFs**, noncoding reading frames such as introns
