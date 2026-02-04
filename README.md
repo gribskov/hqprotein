@@ -41,6 +41,11 @@ Some of the most fundamental work in this are was done by Roger Staden.
 ### Similar efforts that integrate exon prediction and protein comparison
 * helixer
   * https://github.com/usadellab/Helixer
+  > Felix Holst, Anthony M. Bolger, Felicitas Kindel, Christopher Günther, Janina Maß, Sebastian Triesch, Niklas Kiel, Nima Saadat, Oliver Ebenhöh, Björn Usadel, Rainer Schwacke, Andreas P. M. Weber, Marie E. Bolger, Alisandra K. Denton. "Helixer: ab initio prediction of primary eukaryotic gene models combining deep learning and a hidden Markov model." Nat Methods (2025).
+DOI: https://doi.org/10.1038/s41592-025-02939-1
+  >
+  > Felix Stiehler, Marvin Steinborn, Stephan Scholz, Daniela Dey, Andreas P M Weber, Alisandra K Denton. "Helixer: Cross-species gene annotation of large eukaryotic genomes using deep learning." Bioinformatics, btaa1044 (2020).
+DOI: https://doi.org/10.1093/bioinformatics/btaa1044
 * spaln
   * https://github.com/ogotoh/spaln
   > Iwata, H. and Gotoh, O. Benchmarking spliced alignment programs including Spaln2, an extended version of Spaln that incorporates additional species-specific features. Nucleic Acids Research 40 (20) e161 (2012)
