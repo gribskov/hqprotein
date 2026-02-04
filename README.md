@@ -5,6 +5,7 @@
   * [Contributing to the project](#contributing-to-the-project)
     * [Suggestions for working together](#suggestions-for-working-together)
   * [Background](#background)
+    * [Similar efforts that integrate exon prediction and protein comparison](#similar-efforts-that-integrate-exon-prediction-and-protein-comparison)
   * [Possible information to include](#possible-information-to-include)
   * [Approach](#approach)
   * [References](#references)
