@@ -159,8 +159,8 @@ while cds.next():
         # codon counts for all three frames, includes stop codons
         rf[frame].add_from_dna(cds.seq, frame)
 
-    if seq_n > 100:
-        break
+    # if seq_n > 100:
+    #     break
 
 for frame in range(3):
     # calculate codon frequencies from counts, all three reading frames
@@ -183,7 +183,7 @@ print(f'sequence is {len(dna)} bases long')
 half = len(dna) // 2
 dna = dna[:half] + dna[half + 1:]
 print(f'sequence is {len(dna)} bases long with frameshift at {half} (codon {half//3})')
-ave = window_average(dna, lr,20)
-plot(ave, 20, half/3)
+ave = window_average(dna, lr,50)
+plot(ave, 50, half/3)
 
 exit(0)
