@@ -1,5 +1,30 @@
-# hqprotein
-## improved protein gene models
+# hqprotein &mdash; improved protein gene models
+
+<!-- TOC -->
+* [hqprotein &mdash; improved protein gene models](#hqprotein--improved-protein-gene-models)
+  * [Contributing to the project](#contributing-to-the-project)
+    * [Suggestions for working together](#suggestions-for-working-together)
+  * [Background](#background)
+  * [Possible information to include](#possible-information-to-include)
+  * [Approach](#approach)
+  * [References](#references)
+      * [General](#general)
+      * [Alphafold](#alphafold)
+<!-- TOC -->
+
+## Contributing to the project
+To push to the project you must be collaborator. Send a request to Gribskov (mgribsko@purdue.edu) 
+to be added.
+This is preferred because then we can properly credit any contributions. Alternatively, you could
+fork the repo and send a pull request.
+
+### Suggestions for working together
+* To avoid confusion it's preferable to work on your own branch so that we don't interfere with 
+each other
+* Please do not store large datafiles. We need to figure out a convenient way to share such files, 
+* any suggestions?
+
+## Background
 
 Anecdotally it seems that may gene models in complete genomes contain errors 
 such as missing exons, included introns, artificial fusion to adjacent genes,
@@ -41,9 +66,33 @@ with ORFs. The canonical GT|AG found at the beginning|end of introns should
 work, but what abut noncanonical splice sites?  GC|AG and AT|AC make 
 up 0.89% and 0.10% of splices sites in human, respectively (species specific). 
   > Parada GE, Munita R, Cerda CA, Gysling K. A comprehensive survey of non-canonical splice sites in the human transcriptome. Nucleic Acids Res. 2014;42(16):10564-78. doi: 10.1093/nar/gku744.
-
+* For detecting fusions and splitting, interpro motifs can be used. Tabulate which motifs are likely to be
+found together or not.
 ## Approach
-My hand-wavy idea is to calculate a posterior probability of coding on a 
+1. My hand-wavy idea is to calculate a posterior probability of coding on a 
 base-by-base or codon-by-codon basis to identify ORFs or parts of ORFs that are
 most likely to be coding.
 Another possibility would be to train an ML model.
+2. Could use a hidden markov model where the match probabilities are drawn from aligned homologous sequence.
+Positions could be weighted by the fraction of related sequence that match to the bases. This information
+can be combined with coding probability based on codon usage, and probability of switching reading frame
+based on splice donor/acceptor sequence. Calculating the background probabilities are hard, I guess either
+random real sequences or randomized sequences preserving 2mer or 3mer frequencies.
+
+## References
+#### General
+> Fickett JW. Recognition of protein coding regions in DNA sequences. Nucleic Acids Res. 1982 Sep 11;10(17):5303-18. doi: 10.1093/nar/10.17.5303.
+> 
+> Parada GE, Munita R, Cerda CA, Gysling K. A comprehensive survey of non-canonical splice sites in the human transcriptome. Nucleic Acids Res. 2014;42(16):10564-78. doi: 10.1093/nar/gku744.
+>
+> Staden R. Measurements of the effects that coding for a protein has on a DNA sequence and their use for finding genes. Nucleic Acids Res. 1984 Jan 11;12(1 Pt 2):551-67. doi: 10.1093/nar/12.1part2.551. 
+> 
+> Staden R. Finding protein coding regions in genomic sequences. Methods Enzymol. 1990;183:163-80. doi: 10.1016/0076-6879(90)83012-x.
+> 
+
+#### Alphafold
+> Liu H, Laiho A, Törönen P, Holm L. 3-D substructure search by transitive closure in AlphaFold database. Protein Sci. 2025 Jun;34(6):e70169. doi: 10.1002/pro.70169. 
+> 
+>Helen Rebecca Davison, Ulrike Böhme, Shahram Mesdaghi, Paul A. Wilkinson, David S. Roos, 
+> Andrew R. Jones, Daniel J. Rigden. The promise of AlphaFold for gene structure annotation
+bioRxiv 2025.10.21.683479; doi: https://doi.org/10.1101/2025.10.21.683479
