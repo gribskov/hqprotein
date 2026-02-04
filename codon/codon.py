@@ -1,8 +1,40 @@
 """=====================================================================================================================
-# codon.py
-#
+codon.py implements the Codon class which is used to manipulate codon usage/frequency tables
+exits with status == 0 if file opening fails
+
+Summary
+
+# create a codon usage table from DNA sequence, frame 0
+# this gets the raw counts. frame is optional, defaults to zero (start at first base in sequence)
+codon_usage = Codon()
+codon_usage.add_from_dna(dnaseq, frame=0)
+
+# codon usage as fraction of total codon, i.e., P(codon|frame). The frequencies are stored in the count attribute
+codon_frequency = codon_usage / codon_usage.n
+
+# add plus 1 prior to codon counts
+codon_usage += 1
+
+# calculate codon preference (frequencies of codons within each family).. The frequencies are stored in the count
+# attribute
+family_count = codon_usage.add_from_codon()
+preference = codon_usage / family_count
+
+# make a table with a constant value = 1
+prior = Codon()
+prior += 1
+
+# reading from and writing to file
+tw = Codon()
+    tw.add_from_dna(seq)
+    tw.to_file(testfile)
+
+    tr = Codon()
+    tr.from_file(testfile)
+
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
+import sys
 
 
 class Codon:
@@ -59,24 +91,25 @@ class Codon:
 
     def __add__(self, addend):
         """-------------------------------------------------------------------------------------------------------------
+        Add two codon objects
         overload + operator. codon + 1 or codon1 + codon2
         currently supports addition by another instance of Codon, int, or float
         returns a new Codon object
 
-        :param addend: various       addendinator for division, Codon, int, and float supported
-        :return: Codon              new codon with result of division
+        :param addend: various       addend for addition, Codon, int, and float supported
+        :return: Codon              new codon with result of addition
         -------------------------------------------------------------------------------------------------------------"""
         if isinstance(addend, Codon):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(addend, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown addend type
@@ -84,24 +117,25 @@ class Codon:
 
     def __radd__(self, addend):
         """-------------------------------------------------------------------------------------------------------------
+        Add two codon objects
         overload + operator with the Codon object on the right side, i.e., 1 + codon
         currently supports addition by another instance of Codon, int, or float
         returns a new Codon object
 
-        :param addend: various       addendinator for division, Codon, int, and float supported
-        :return: Codon              new codon with result of division
+        :param addend: various       addend for addition, Codon, int, and float supported
+        :return: Codon              new codon with result of addition
         -------------------------------------------------------------------------------------------------------------"""
         if isinstance(addend, Codon):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(addend, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] + addend
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown addend type
@@ -109,6 +143,7 @@ class Codon:
 
     def __truediv__(self, denom):
         """-------------------------------------------------------------------------------------------------------------
+        divide one codon table by another, or by a constant
         overload / operator.
         currently supports division by another instance of Codon, int, or float
         returns a new Codon object
@@ -120,13 +155,13 @@ class Codon:
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom.count[codon]
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
         elif isinstance(denom, (int, float)):
             result = Codon()
             for codon in self.count:
                 result.count[codon] = self.count[codon] / denom
-                result.n = sum(result.count.values())
+            result.n = sum(result.count.values())
             return result
 
         # only reach here for unknown denominator type
@@ -148,7 +183,6 @@ class Codon:
 
         return out.rstrip()
 
-
     def add_from_dna(self, dna, frame=0):
         """-------------------------------------------------------------------------------------------------------------
         Add the codon counts from a DNA sequence in fasta format to the current count
@@ -164,45 +198,113 @@ class Codon:
 
         return self.n
 
-    def add_from_codon(self, codon):
+    def family(self):
         """-------------------------------------------------------------------------------------------------------------
         Build amino acid (codon family) count from an existing Codon object. store the family count in each codon in
-        the family. This makes it simple to divide codon counts by family counts to get codon preference
+        the family. This makes it simple to divide codon counts by family counts to get codon preference.
 
-        :param codon: Codon     Codon object with codon counts
-        :return: int            total counts (should equal number of input codons)
+        :return: Codon          new Codon with counts of family stored in each docon
         -------------------------------------------------------------------------------------------------------------"""
         n = 0
-        for thiscodon in codon.count:
+        result = Codon()
+        for thiscodon in Codon.codon2aa:
             aa = self.codon2aa[thiscodon]
             for member in Codon.aa2codon[aa]:
-                self.count[member] += codon.count[thiscodon]
+                # add counts for each member of the codon family to each member
+                result.count[thiscodon] += self.count[member]
 
-            n += codon.count[thiscodon]
+            n += result.count[thiscodon]
 
-        self.n = n
-        return n
+        result.n = n
+        return result
 
-    def update_frequencies(self):
+    def to_file(self, filename, fieldwidth=6, decimal=3, sep='  '):
         """-------------------------------------------------------------------------------------------------------------
-        Using the current count and n, calculate the frequency of each codon, P(codon|dna_seq)
-        frequency is stored in self.frequency
-        Use the returned sum of the frequencies to check for errors (such as incorrect number  of codons, self.b)
+        save codon table to file. Codons are ordered in the same traditional order as in __str__(). Lines of 4 codons
+        codon}:{self.count[codon]:{fieldwidth}.{decimal}f}{sep}
+        there is no sep string after the final codon
 
-        :return: float      sum of frequency, should be 1.0
+        TODO add header with source as comment
+        TODO automatically calculate fieldwith
+
+        :param filename: string     path to file to save codon table
+        :param fieldwidth: int      fieldwidth for formatting codon count
+        :param decimal: int         number of decimal places to show
+        :param sep: string          separator between codons
+        :return: None
         -------------------------------------------------------------------------------------------------------------"""
-        count = self.count
-        n = self.n
-        self.frequency = {c: count[c] / n for c in count}
+        fh = Codon.opensafe(filename, 'w', __name__)
 
-        return sum(self.frequency.values())
+        for b0 in 'TCAG':
+            for b1 in 'TCAG':
+                out = ''
+                for b2 in 'TCAG':
+                    codon = f'{b0}{b2}{b1}'
+                    out += f'{codon}:{self.count[codon]:{fieldwidth}.{decimal}f}{sep}'
+
+                out += '\n'
+                out.replace(f'{sep}\n', '\n')
+                fh.write(out)
+
+        fh.close()
+        return None
+
+    def from_file(self, filename, sep='  '):
+        """-------------------------------------------------------------------------------------------------------------
+        Read a codon table written by Codon.to_file().
+        sep must be the same that file was written with because it is used to split the codons in each line
+
+        TODO skip comments
+        TODO is the source information necessary?
+
+        :param filename: string     path to file to read codon table
+        :param sep: string          separator between codon fields in file
+        :return: int                number of codons read, should be 64
+        -------------------------------------------------------------------------------------------------------------"""
+        fh = Codon.opensafe(filename, 'r', __name__)
+
+        codon_n = 0
+        for line in fh:
+            line = line.rstrip()
+            if not line:
+                continue
+            fields = line.split(sep)
+            for field in fields:
+                codon, count = field.split(':')
+                count = float(count)
+                self.count[codon] = count
+                self.n += count
+                codon_n += 1
+
+        fh.close()
+        return codon_n
+
+    @staticmethod
+    def opensafe(filename, mode='u', source_method='unknown'):
+        """-------------------------------------------------------------------------------------------------------------
+        Status = 1 if filename cannot be opened
+
+        :param filename: string         path to file to save codon table
+        :param mode: string             file mode
+        :param source_method: string    name of the calling program for use in error messages
+        :return: filehandle
+        -------------------------------------------------------------------------------------------------------------"""
+        modestr = {'r': 'reading', 'w': 'writing', 'u': 'unknown'}
+        fh = None
+        try:
+            fh = open(filename, mode)
+        except (IOError, OSError):
+            sys.stderr.write(f'{source_method}: Error opening {filename} for {modestr[mode]}\n')
+            exit(1)
+
+        return fh
 
 
 # ######################################################################################################################
 # Testing
 # ######################################################################################################################
 if __name__ == '__main__':
-    print(f'\n{"*"*80}\nRead codons of coding frame from DNA\n{"*"*80}')
+    print(f'\n{"*" * 80}\nRead codons of coding frame from DNA\n{"*" * 80}')
     coding = Codon()
 
     seq = '''ATGAGGTTCCACGTTCATTCGACGCCATTCTACCAACGCATAGCCTGCAACACCACATCGACCATCACTG
@@ -229,60 +331,75 @@ if __name__ == '__main__':
     print(f'expect {len(seq) // 3} codons, and no stop codons except {lastcodon}.')
     print(f'\n{coding}')
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest update frequencies\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest conversion to frequencies\n{"*" * 80}')
     print('Expect all values to be 1/64 = 0.016')
+    # test data is table with one count for each codon
     t1 = Codon()
-    for codon in t1.codon2aa:
-        t1.count[codon] = 1
-        t1.n += 1
-    t1.update_frequencies()
-    for codon in t1.codon2aa:
-        t1.count[codon] = t1.frequency[codon]
-    print(t1)
+    t1 += 1
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest conversion to family counts\n{"*"*80}')
-    print(f'Expect counts to be the number of codons in the corresponding synonymous codon family.')
-    t2 = Codon()
-    for codon in t2.codon2aa:
-        t2.count[codon] = 1
-        t2.n += 1
-    t3 = Codon()
-    t3.add_from_codon(t2)
-    print(t3)
+    t2 = t1 / t1.n
+    print(t2)
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest division of one codon table by another\n{"*"*80}')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest conversion to family counts\n{"*" * 80}')
+    print(f'Expect counts to be the number of codons in the corresponding synonymous codon family. Total count = 244')
+    t1 = Codon()
+    t1 += 1
+    t2 = t1.family()
+    print(t2)
+    # print family sums
+    print('\nCumulative counts by codon family (family, family size, count)')
+    total_count = 0
+    for aa in Codon.aa2codon:
+        family = Codon.aa2codon[aa]
+        for codon in family:
+            total_count += t2.count[codon]
+        print(f'\t{aa}\t{len(family)}\t{total_count}')
+
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest division of one codon table by another\n{"*" * 80}')
     print(' All values should be 1/synonymous_codon_family_size.')
     t1 = Codon()
-    for codon in t1.codon2aa:
-        t1.count[codon] = 1
-        t1.n += 1
-    t2 = t1 / t3
-    print(t2)
+    t1 += 1
+
+    t3 = t1 / t2
+    print(t3)
 
     # -----------------------------------------------------------------------------------------------
     print(f'\n{"*" * 80}\nTest addition\n{"*" * 80}')
 
     t1 = Codon()
     t1 += 1
-    print('t1 += 1; All values should be 1')
+    print('t1 += 1; All values should be 1, observations=64')
     print(t1)
 
     t2 = 2 + t1
-    print('\nt2 = 2 + t1; All values should be 3')
+    print('\nt2 = 2 + t1; All values should be 3, observations=192')
     print(t2)
 
     t3 = t1 + t2
-    print('\nt3 = t1 + t2; All values should be 4')
+    print('\nt3 = t1 + t2; All values should be 4, observations = 256')
     print(t3)
 
-    #-----------------------------------------------------------------------------------------------
-    print(f'\n{"*"*80}\nTest division by 2; should match original count\n{"*"*80}')
-    print(f'Expect values to be 1/2 of size of codon family.')
+    # -----------------------------------------------------------------------------------------------
+    print(f'\n{"*" * 80}\nTest division by 2; should match original count\n{"*" * 80}')
+    print(f'Expect values to be 2, observations = 128.')
     half = t3 / 2
     print(f'{half}')
 
+    # -----------------------------------------------------------------------------------------------
+    testfile = 'codon.write.test.text'
+    print(f'\n{"*" * 80}\nFile writing: write to {testfile}\n{"*" * 80}')
+    tw = Codon()
+    tw.add_from_dna(seq)
+    print(f'writing to {testfile}')
+    print(tw)
+    tw.to_file(testfile)
+
+    tr = Codon()
+    print(f'\nreading from {testfile}')
+    tr.from_file(testfile)
+    print(tr)
 
     exit(0)
