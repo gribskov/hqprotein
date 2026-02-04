@@ -1,5 +1,24 @@
-# hqprotein
-## improved protein gene models
+# hqprotein &mdash; improved protein gene models
+
+<!-- TOC -->
+* [hqprotein &mdash; improved protein gene models](#hqprotein--improved-protein-gene-models)
+  * [Contributing to the project](#contributing-to-the-project)
+  * [Background](#background)
+  * [Possible information to include](#possible-information-to-include)
+  * [Approach](#approach)
+<!-- TOC -->
+
+## Contributing to the project
+To push to the project you must be collaborator. Send a request to Gribskov (mgribsko@purdue.edu). 
+This is preferred because then we can properly credit any contributions. Alternatively, you could
+fork the repo and send a pull request.
+
+* To avoid confusion it's preferable to work on your own branch so that we don't interfere with 
+each other
+* Please do not store large datafiles. We need to figure out a convenient way to share such files, 
+* any suggestions?
+
+## Background
 
 Anecdotally it seems that may gene models in complete genomes contain errors 
 such as missing exons, included introns, artificial fusion to adjacent genes,
