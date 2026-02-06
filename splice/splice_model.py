@@ -35,9 +35,18 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        # if feature_count > 50: break
+        if feature_count > 50: break
 
     print(f'\nexons: {feature_count}')
     print(f'multiple exons sets: {len(junction)}')
+
+    for j in junction:
+        # TODO this needs to consider strand
+        print(f'{j[0].attribute['Parent']} strand: {j[0].strand}')
+        donor = j[0]
+        for exon in range(1,len(j)):
+            acceptor = j[exon]
+            print(f'\tdonor {donor.end}\tacceptor {acceptor.start}\t')
+            donor = acceptor
 
     exit(0)
