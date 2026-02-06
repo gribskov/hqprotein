@@ -17,7 +17,7 @@ import datetime
 import textwrap as _textwrap
 
 from codon import Codon
-from include.fasta import Fasta
+from include.sequence.fasta import Fasta
 
 
 class CustomFormatter(argparse.ArgumentDefaultsHelpFormatter):
@@ -77,7 +77,7 @@ if __name__ == '__main__':
     # rf holds the codon information for the three reading frames
     rf = [Codon(), Codon(), Codon()]
     seq_n = 0
-    while cds.next():
+    for seq in cds:
         # sum codon usage counts over all CDS sequences for all three reading frames
         seq_n += 1
         print(f'\t{seq_n}\t{cds.id}')
