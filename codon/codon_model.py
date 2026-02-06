@@ -3,10 +3,10 @@
 #
 # Michael Gribskov 1/28/2026
 ====================================================================================================================="""
-from include.fasta import Fasta
+from include.sequence.fasta import Fasta
 from codon import Codon
 import matplotlib.pyplot as plt
-import numpy as np
+# import numpy as np
 
 
 def calculate_lr(rf):
@@ -145,14 +145,14 @@ TTTGTGGAAGGAGGGGATGAGGGGAGGGGTGAAGGTACAGTATTGA""".replace('\n', '')
 # ===================================================================================================
 # Main
 # ===================================================================================================
-dnafile = '../data/z.tritici.IP0323.reannot.cds.fasta'
+dnafile = 'data/z.tritici.IP0323.reannot.cds.fasta'
 cds = Fasta(filename=dnafile)
 
 # rf holds the codon information for the three reading frames
 rf = [Codon(), Codon(), Codon()]
 
 seq_n = 0
-while cds.next():
+for seq in cds:
     # sum codon usage over all CDS sequences for all three reading frames
     seq_n += 1
     print(f'{seq_n}\t{cds.id}')
