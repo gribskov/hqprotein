@@ -224,6 +224,9 @@ class Codon:
         codon}:{self.count[codon]:{fieldwidth}.{decimal}f}{sep}
         there is no sep string after the final codon
 
+        TODO add header with source as comment
+        TODO automatically calculate fieldwith
+
         :param filename: string     path to file to save codon table
         :param fieldwidth: int      fieldwidth for formatting codon count
         :param decimal: int         number of decimal places to show
@@ -250,6 +253,9 @@ class Codon:
         """-------------------------------------------------------------------------------------------------------------
         Read a codon table written by Codon.to_file().
         sep must be the same that file was written with because it is used to split the codons in each line
+
+        TODO skip comments
+        TODO is the source information necessary?
 
         :param filename: string     path to file to read codon table
         :param sep: string          separator between codon fields in file
