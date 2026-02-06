@@ -1,0 +1,3 @@
+[submodule "include/sequence"]
+	path = include/sequence
+	url = https://github.com/purdomics/sequence.git
