@@ -6,7 +6,8 @@ frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
-from include.gff2 import GxfSet, GxfRecord
+from include.gff.gff2 import GxfSet, GxfRecord
+from collections import defaultdict
 
 # ======================================================================================================================
 # main
@@ -16,7 +17,7 @@ if __name__ == '__main__':
     gff = GxfSet(file=gff_file, fmt='gff')
 
     feature_n = gff.feature_get(['exon'])
-    junction = []
+    junction = defaultdict(list)
     feature_count = 0
     current = ''
     exon_set = []
@@ -30,7 +31,8 @@ if __name__ == '__main__':
             if len(exon_set) > 1:
                 # multiple exons, get acceptor and donor sites
                 print(f'\tmultiple: {exon_set}')
-                junction.append(exon_set)
+                sequence = exon_set[0].seqid
+                junction[sequence].append(exon_set)
             exon_set = [feature]
 
         current = feature.attribute['Parent']
