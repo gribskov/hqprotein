@@ -6,7 +6,7 @@ frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
-from include.gff.gff2 import GxfSet, GxfRecord
+from include.gff2 import GxfSet, GxfRecord
 
 # ======================================================================================================================
 # main
