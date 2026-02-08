@@ -7,6 +7,7 @@ frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
 from include.gff.gff2 import GxfSet, GxfRecord
+from include.sequence.fasta import Fasta
 from collections import defaultdict
 
 # ======================================================================================================================
@@ -15,12 +16,14 @@ from collections import defaultdict
 if __name__ == '__main__':
     gff_file = 'data/z.tritici.IP0323.reannot.gff3'
     gff = GxfSet(file=gff_file, fmt='gff')
+    genome = Fasta(filename='data/z.tritici.IP0323.fasta')
 
     feature_n = gff.feature_get(['exon'])
     junction = defaultdict(list)
     feature_count = 0
     current = ''
     exon_set = []
+    exon_set_n = 0
     for feature in gff.features:
         # find exons from multi exon genes and store in junction
         feature_count += 1
@@ -34,21 +37,31 @@ if __name__ == '__main__':
                 sequence = exon_set[0].seqid
                 junction[sequence].append(exon_set)
             exon_set = [feature]
+            exon_set_n += 1
 
         current = feature.attribute['Parent']
 
         if feature_count > 50: break
 
     print(f'\nexons: {feature_count}')
-    print(f'multiple exons sets: {len(junction)}')
+    print(f'multiple exons sets: {exon_set_n}')
 
-    for j in junction:
-        # TODO this needs to consider strand
-        print(f'{j[0].attribute['Parent']} strand: {j[0].strand}')
-        donor = j[0]
-        for exon in range(1,len(j)):
-            acceptor = j[exon]
-            print(f'\tdonor {donor.end}\tacceptor {acceptor.start}\t')
-            donor = acceptor
+    # read sequence in genome
+    for sequence in genome:
+        print(f'{sequence['id']}')
+        id = sequence['id']
+        for exon_set in junction[sequence['id']]:
+            parent = exon_set[0].attribute['Parent']
+            strand = exon_set[0].strand
+
+            if strand == '-':
+                continue
+
+            print(f'{parent} strand: {strand}')
+            for i in range(len(exon_set) - 1):
+                donor = exon_set[i].end
+                acceptor = exon_set[i + 1].start
+                print(f'\tdonor {donor} {sequence['seq'][donor - 5:donor + 10]}\t'
+                      f'acceptor {acceptor} {sequence['seq'][acceptor - 10:acceptor + 4]}')
 
     exit(0)
