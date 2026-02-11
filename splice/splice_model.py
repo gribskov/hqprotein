@@ -109,7 +109,7 @@ class SpliceSite:
 if __name__ == '__main__':
     gff_file = 'data/z.tritici.IP0323.reannot.gff3'
     gff = GxfSet(file=gff_file, fmt='gff')
-    genome = Fasta(filename='data/z.tritici.IP0323.fasta')
+    genome = Fasta(filename='data/short.fa')
 
     feature_n = gff.feature_get(['exon'])
     junction = defaultdict(list)
