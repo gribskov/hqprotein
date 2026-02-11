@@ -6,25 +6,62 @@ frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
-from include.gff.gff2 import GxfSet, GxfRecord
+from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
 from collections import defaultdict
 
-class SpliceSite():
+
+class SpliceSite:
     """=================================================================================================================
     Frequency matrix for splice donor and acceptor
     ================================================================================================================="""
 
-    def __init__(self):
+    def __init__(self, pre=5, post=10):
         """-------------------------------------------------------------------------------------------------------------
         holds position specific counts or frequencies for splice donor and acceptor sites
+        pre and post are defined with respect to the exon side with before indicating the exon side
+
+               donor           acceptor
+              pre|post         pre|post
+        exon-----|-----intron-----|-----exon
+
+        for pre = 2 and post = 5m with e and i indicating exon positions
+        donor is eeiiiii and acceptor is iiiiiee
+
+        donor       position specific counts
+        acceptor    position specific counts
+        donor_n     count of donor examples; use to calculate frequencies
+        acceptor_n  count of acceptor examples; use to calculate frequencies
+        pre         bases before site (exon side)
+        post        bases after site (intron side)
         -------------------------------------------------------------------------------------------------------------"""
         self.donor = []
-        self.donor_n
+        self.donor_n = 0
         self.acceptor = []
-        self.acceptor_n
-        width_pre = 6
-        width_post = 10
+        self.acceptor_n = 0
+        self.pre = pre
+        self.post = post
+
+        # initialize donor and acceptor
+        self.site_init()
+
+    def site_init(self):
+        """-------------------------------------------------------------------------------------------------------------
+        initialize the count matrices (donor and acceptor), and the total counts (donor_n, acceptor_n)
+
+        :return: True
+        -------------------------------------------------------------------------------------------------------------"""
+        sitesize = self.pre + self.post
+        self.donor = [0 for _ in range(sitesize)]
+        self.acceptor = [0 for _ in range(sitesize)]
+        self.donor_n = self.acceptor_n = 0
+
+        return True
+
+
+# ======================================================================================================================
+# End of class SpliceSite
+# ======================================================================================================================
 
 # ======================================================================================================================
 # main
