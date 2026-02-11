@@ -83,6 +83,21 @@ class SpliceSite:
 
         return self.donor_n, self.acceptor_n
 
+    def __str__(self, fieldwidth=4, precision=1):
+        """-------------------------------------------------------------------------------------------------------------
+        formatted version of site
+
+        :return:
+        -------------------------------------------------------------------------------------------------------------"""
+        outstr = 'acceptor:'
+        for base in self.acceptor[0]:
+            outstr +='\t'
+            for column in self.acceptor:
+                outstr += f'{column[base]:fieldwidth.precision}'
+
+        return outstr
+
+
 
 # ======================================================================================================================
 # End of class SpliceSite
@@ -144,5 +159,6 @@ if __name__ == '__main__':
                 print(f'\tdonor {donor} {sequence['seq'][donor - 5:donor + 10]}\t'
                       f'acceptor {acceptor} {sequence['seq'][acceptor - 10:acceptor + 4]}')
                 splice.add_junction(donor, acceptor, sequence['seq'])
+                print(splice)
 
     exit(0)
