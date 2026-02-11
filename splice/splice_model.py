@@ -60,13 +60,15 @@ class SpliceSite:
 
     def add_junction(self, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
-        add a donor/acceptor pair from sequence based con coordinates (from GFF)
+        add a donor/acceptor pair from sequence based con coordinates (from GFF). Input sequences are forced to
+        uppercase. Currently, no checking for non A,C,G,T bases.
 
         :param donorpos: int        end of donor exon
         :param acceptorpos: int     beginning of acceptor exon
         :param sequence: str        DNA sequence
         :return: int, int           number of donor/acceptor sequences
         -------------------------------------------------------------------------------------------------------------"""
+        sequence = sequence.upper()
         self.donor_n += 1
         self.acceptor_n += 1
         sitepos = 0
@@ -123,7 +125,9 @@ if __name__ == '__main__':
     print(f'multiple exons sets: {exon_set_n}')
 
     # read sequence in genome
+    splice = SpliceSite()
     for sequence in genome:
+        # TODO should return Fasta object not dict
         print(f'{sequence['id']}')
         id = sequence['id']
         for exon_set in junction[sequence['id']]:
@@ -139,5 +143,6 @@ if __name__ == '__main__':
                 acceptor = exon_set[i + 1].start
                 print(f'\tdonor {donor} {sequence['seq'][donor - 5:donor + 10]}\t'
                       f'acceptor {acceptor} {sequence['seq'][acceptor - 10:acceptor + 4]}')
+                splice.add_junction(donor, acceptor, sequence['seq'])
 
     exit(0)
