@@ -52,11 +52,34 @@ class SpliceSite:
         :return: True
         -------------------------------------------------------------------------------------------------------------"""
         sitesize = self.pre + self.post
-        self.donor = [0 for _ in range(sitesize)]
-        self.acceptor = [0 for _ in range(sitesize)]
+        self.donor = [{'A': 0, 'C': 0, 'G': 0, 'T': 0} for _ in range(sitesize)]
+        self.acceptor = [{'A': 0, 'C': 0, 'G': 0, 'T': 0} for _ in range(sitesize)]
         self.donor_n = self.acceptor_n = 0
 
         return True
+
+    def add_junction(self, donorpos, acceptorpos, sequence):
+        """-------------------------------------------------------------------------------------------------------------
+        add a donor/acceptor pair from sequence based con coordinates (from GFF)
+
+        :param donorpos: int        end of donor exon
+        :param acceptorpos: int     beginning of acceptor exon
+        :param sequence: str        DNA sequence
+        :return: int, int           number of donor/acceptor sequences
+        -------------------------------------------------------------------------------------------------------------"""
+        self.donor_n += 1
+        self.acceptor_n += 1
+        sitepos = 0
+        for pos in range(donorpos - self.pre, donorpos + self.post):
+            self.donor[sitepos][sequence[pos]] += 1
+            sitepos += 1
+
+        sitepos = 0
+        for pos in range(acceptorpos - self.post, acceptorpos + self.pre):
+            self.acceptor[sitepos][sequence[pos]] += 1
+            sitepos += 1
+
+        return self.donor_n, self.acceptor_n
 
 
 # ======================================================================================================================
