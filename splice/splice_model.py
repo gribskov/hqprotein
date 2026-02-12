@@ -78,25 +78,31 @@ class SpliceSite:
         if strand == '+':
             # positive strand splice junctions
             sitepos = 0
-            for pos in range(donorpos - self.pre, donorpos + self.post):
-                self.donor[sitepos][sequence[pos]] += 1
+            left = donorpos - self.pre
+            right =  donorpos + self.post
+            site = sequence[left:right]
+            for base in site:
+                self.donor[sitepos][base] += 1
                 sitepos += 1
 
             sitepos = 0
-            for pos in range(acceptorpos - self.post - 1, acceptorpos + self.pre - 1):
-                self.acceptor[sitepos][sequence[pos]] += 1
+            left = acceptorpos - self.post - 1
+            right = acceptorpos + self.pre - 1
+            site = sequence[left:right]
+            for base in site:
+                self.acceptor[sitepos][base] += 1
                 sitepos += 1
 
         else:
             # negative strand splice junctions
             left = donorpos - self.post - 1
             right = donorpos + self.pre - 1
-            print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
-            print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
+            # print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
+            # print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
             site = sequence[left:right]
-            print(f'{site}')
+            # print(f'{site}')
             site = site.translate(SpliceSite.base_complement)[::-1]
-            print(f'{site}')
+            # print(f'{site}')
 
             sitepos = 0
             for base in site:
@@ -107,9 +113,9 @@ class SpliceSite:
             right = acceptorpos + self.post
             orig = sequence[left:right]
             site = orig.translate(SpliceSite.base_complement)[::-1]
-            print(f'\nacceptor')
-            print(f'{orig}')
-            print(f'{site}')
+            # print(f'\nacceptor')
+            # print(f'{orig}')
+            # print(f'{site}')
             sitepos = 0
             for base in site:
                 self.acceptor[sitepos][base] += 1
