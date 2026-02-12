@@ -62,7 +62,7 @@ class SpliceSite:
 
     def add_junction(self, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
-        add a donor/acceptor pair from sequence based con coordinates (from GFF). Input sequences are forced to
+        add a donor/acceptor pair from sequence based on coordinates (from GFF). Input sequences are forced to
         uppercase. Currently, no checking for non A,C,G,T bases.
 
         :param donorpos: int        end of donor exon
@@ -79,7 +79,7 @@ class SpliceSite:
             sitepos += 1
 
         sitepos = 0
-        for pos in range(acceptorpos - self.post, acceptorpos + self.pre):
+        for pos in range(acceptorpos - self.post - 1, acceptorpos + self.pre - 1):
             self.acceptor[sitepos][sequence[pos]] += 1
             sitepos += 1
 
@@ -93,22 +93,21 @@ class SpliceSite:
         :return: str    formatted string with donor and accptor sites
         -------------------------------------------------------------------------------------------------------------"""
         fmt = f'{self.fieldwidth}.{self.precision}f'
-        pre = self.pre - 1
         divider = f'{'|':>{self.fieldwidth}s}'
+        dpos = {'donor': self.pre - 1, 'acceptor': self.post - 1}
         outstr = ''
         for site in ('donor', 'acceptor'):
             outstr += f'{site}:\n'
             sitedata = getattr(self, site)
             for base in sitedata[0]:
-                outstr +=f'\t{base}  '
+                outstr += f'\t{base}  '
                 for pos, column in enumerate(sitedata):
                     outstr += f'{column[base]:{fmt}}'
-                    if pos == pre:
+                    if pos == dpos[site]:
                         outstr += divider
-                outstr +='\n'
+                outstr += '\n'
 
         return outstr
-
 
 
 # ======================================================================================================================
@@ -155,7 +154,7 @@ if __name__ == '__main__':
     splice = SpliceSite()
     for sequence in genome:
         print(f'{sequence.id}')
-        id = sequence.id
+        # id = sequence.id
         for exon_set in junction[sequence.id]:
             parent = exon_set[0].attribute['Parent']
             strand = exon_set[0].strand
@@ -170,6 +169,6 @@ if __name__ == '__main__':
                 print(f'\tdonor {donor} {sequence.seq[donor - 5:donor + 10]}\t'
                       f'acceptor {acceptor} {sequence.seq[acceptor - 10:acceptor + 4]}')
                 splice.add_junction(donor, acceptor, sequence.seq)
-                print(splice)
+                print(f'\n{splice}')
 
     exit(0)
