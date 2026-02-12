@@ -103,42 +103,6 @@ class SpliceSite:
                 pssm[sitepos][base] += 1
                 sitepos += 1
 
-        #     sitepos = 0
-        #     left = acceptorpos - self.post - 1
-        #     right = acceptorpos + self.pre - 1
-        #     site = sequence[left:right]
-        #     for base in site:
-        #         self.acceptor[sitepos][base] += 1
-        #         sitepos += 1
-        #
-        # else:
-        #     # negative strand splice junctions
-        #     left = donorpos - self.post - 1
-        #     right = donorpos + self.pre - 1
-        #     # print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
-        #     # print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
-        #     site = sequence[left:right]
-        #     # print(f'{site}')
-        #     site = site.translate(SpliceSite.base_complement)[::-1]
-        #     # print(f'{site}')
-        #
-        #     sitepos = 0
-        #     for base in site:
-        #         self.donor[sitepos][base] += 1
-        #         sitepos += 1
-        #
-        #     left = acceptorpos - self.pre
-        #     right = acceptorpos + self.post
-        #     orig = sequence[left:right]
-        #     site = orig.translate(SpliceSite.base_complement)[::-1]
-        #     # print(f'\nacceptor')
-        #     # print(f'{orig}')
-        #     # print(f'{site}')
-        #     sitepos = 0
-        #     for base in site:
-        #         self.acceptor[sitepos][base] += 1
-        #         sitepos += 1
-
         return self.donor_n, self.acceptor_n
 
     @staticmethod
