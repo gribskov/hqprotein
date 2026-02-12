@@ -60,28 +60,30 @@ class SpliceSite:
 
         return True
 
-    def add_junction(self, donorpos, acceptorpos, sequence):
+    def add_junction(self, strand, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
         add a donor/acceptor pair from sequence based on coordinates (from GFF). Input sequences are forced to
         uppercase. Currently, no checking for non A,C,G,T bases.
 
         :param donorpos: int        end of donor exon
         :param acceptorpos: int     beginning of acceptor exon
+        :param strand: strand       strand, '+' or '-'
         :param sequence: str        DNA sequence
         :return: int, int           number of donor/acceptor sequences
         -------------------------------------------------------------------------------------------------------------"""
         sequence = sequence.upper()
         self.donor_n += 1
         self.acceptor_n += 1
-        sitepos = 0
-        for pos in range(donorpos - self.pre, donorpos + self.post):
-            self.donor[sitepos][sequence[pos]] += 1
-            sitepos += 1
+        if strand == '+':
+            sitepos = 0
+            for pos in range(donorpos - self.pre, donorpos + self.post):
+                self.donor[sitepos][sequence[pos]] += 1
+                sitepos += 1
 
-        sitepos = 0
-        for pos in range(acceptorpos - self.post - 1, acceptorpos + self.pre - 1):
-            self.acceptor[sitepos][sequence[pos]] += 1
-            sitepos += 1
+            sitepos = 0
+            for pos in range(acceptorpos - self.post - 1, acceptorpos + self.pre - 1):
+                self.acceptor[sitepos][sequence[pos]] += 1
+                sitepos += 1
 
         return self.donor_n, self.acceptor_n
 
@@ -168,7 +170,7 @@ if __name__ == '__main__':
                 acceptor = exon_set[i + 1].start
                 print(f'\tdonor {donor} {sequence.seq[donor - 5:donor + 10]}\t'
                       f'acceptor {acceptor} {sequence.seq[acceptor - 10:acceptor + 4]}')
-                splice.add_junction(donor, acceptor, sequence.seq)
+                splice.add_junction(strand, donor, acceptor, sequence.seq)
                 print(f'\n{splice}')
 
     exit(0)
