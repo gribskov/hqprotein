@@ -75,51 +75,69 @@ class SpliceSite:
         sequence = sequence.upper()
         self.donor_n += 1
         self.acceptor_n += 1
+        left = {}
+        right = {}
         if strand == '+':
-            # positive strand splice junctions
-            sitepos = 0
-            left = donorpos - self.pre
-            right =  donorpos + self.post
-            site = sequence[left:right]
-            for base in site:
-                self.donor[sitepos][base] += 1
-                sitepos += 1
-
-            sitepos = 0
-            left = acceptorpos - self.post - 1
-            right = acceptorpos + self.pre - 1
-            site = sequence[left:right]
-            for base in site:
-                self.acceptor[sitepos][base] += 1
-                sitepos += 1
-
+            # donor/acceptor site endpoints for + strand
+            left['donor'] = donorpos - self.pre
+            right['donor'] = donorpos + self.post
+            left['acceptor'] = acceptorpos - self.post - 1
+            right['acceptor'] = acceptorpos + self.pre - 1
         else:
-            # negative strand splice junctions
-            left = donorpos - self.post - 1
-            right = donorpos + self.pre - 1
-            # print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
-            # print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
-            site = sequence[left:right]
-            # print(f'{site}')
-            site = site.translate(SpliceSite.base_complement)[::-1]
-            # print(f'{site}')
+            # donor/acceptor site endpoints for - strand
+            left['donor'] = donorpos - self.post - 1
+            right['donor'] = donorpos + self.pre - 1
+            left['acceptor'] = acceptorpos - self.pre
+            right['acceptor'] = acceptorpos + self.post
 
+        for jtype in ('donor', 'acceptor'):
             sitepos = 0
+            pssm = getattr(self, jtype)
+
+            site = sequence[left[jtype]:right[jtype]]
+            if strand != '+':
+                # reverse complement - strand
+                site = site.translate(SpliceSite.base_complement)[::-1]
+
             for base in site:
-                self.donor[sitepos][base] += 1
+                pssm[sitepos][base] += 1
                 sitepos += 1
 
-            left = acceptorpos - self.pre
-            right = acceptorpos + self.post
-            orig = sequence[left:right]
-            site = orig.translate(SpliceSite.base_complement)[::-1]
-            # print(f'\nacceptor')
-            # print(f'{orig}')
-            # print(f'{site}')
-            sitepos = 0
-            for base in site:
-                self.acceptor[sitepos][base] += 1
-                sitepos += 1
+        #     sitepos = 0
+        #     left = acceptorpos - self.post - 1
+        #     right = acceptorpos + self.pre - 1
+        #     site = sequence[left:right]
+        #     for base in site:
+        #         self.acceptor[sitepos][base] += 1
+        #         sitepos += 1
+        #
+        # else:
+        #     # negative strand splice junctions
+        #     left = donorpos - self.post - 1
+        #     right = donorpos + self.pre - 1
+        #     # print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
+        #     # print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
+        #     site = sequence[left:right]
+        #     # print(f'{site}')
+        #     site = site.translate(SpliceSite.base_complement)[::-1]
+        #     # print(f'{site}')
+        #
+        #     sitepos = 0
+        #     for base in site:
+        #         self.donor[sitepos][base] += 1
+        #         sitepos += 1
+        #
+        #     left = acceptorpos - self.pre
+        #     right = acceptorpos + self.post
+        #     orig = sequence[left:right]
+        #     site = orig.translate(SpliceSite.base_complement)[::-1]
+        #     # print(f'\nacceptor')
+        #     # print(f'{orig}')
+        #     # print(f'{site}')
+        #     sitepos = 0
+        #     for base in site:
+        #         self.acceptor[sitepos][base] += 1
+        #         sitepos += 1
 
         return self.donor_n, self.acceptor_n
 
