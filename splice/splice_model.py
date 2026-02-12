@@ -83,12 +83,16 @@ class SpliceSite:
             right['donor'] = donorpos + self.post
             left['acceptor'] = acceptorpos - self.post - 1
             right['acceptor'] = acceptorpos + self.pre - 1
+            # print(f'{strand}\t{sequence[left['donor']:right['donor']]}\t{sequence[left['acceptor']:right['acceptor']]}')
         else:
             # donor/acceptor site endpoints for - strand
             left['donor'] = donorpos - self.post - 1
             right['donor'] = donorpos + self.pre - 1
             left['acceptor'] = acceptorpos - self.pre
             right['acceptor'] = acceptorpos + self.post
+            # d = sequence[left['donor']:right['donor']].translate(SpliceSite.base_complement)[::-1]
+            # a = sequence[left['acceptor']:right['acceptor']].translate(SpliceSite.base_complement)[::-1]
+            # print(f'{strand}\t{d}\t{a}')
 
         for jtype in ('donor', 'acceptor'):
             sitepos = 0
@@ -150,7 +154,7 @@ class SpliceSite:
 if __name__ == '__main__':
     gff_file = 'data/z.tritici.IP0323.reannot.gff3'
     gff = GxfSet(file=gff_file, fmt='gff')
-    genome = Fasta(filename='data/short.fa')
+    genome = Fasta(filename='data/z.tritici.IP0323.fasta')
 
     feature_n = gff.feature_get(['exon'])
     junction = defaultdict(list)
@@ -161,13 +165,13 @@ if __name__ == '__main__':
     for feature in gff.features:
         # find exons from multi exon genes and store in junction
         feature_count += 1
-        print(f'{feature.start}\t{feature.end}\t{feature.strand}\t{feature.attribute['Parent']}')
+        # print(f'\t\t{feature.start}\t{feature.end}\t{feature.strand}\t{feature.attribute['Parent']}')
         if current == feature.attribute['Parent']:
             exon_set.append(feature)
         else:
             if len(exon_set) > 1:
                 # multiple exons, get acceptor and donor sites
-                print(f'\tmultiple: {exon_set}')
+                print(f'\tmultiple exon gene: {feature.seqid}\t{feature.attribute['Parent']}')
                 sequence = exon_set[0].seqid
                 junction[sequence].append(exon_set)
             exon_set = [feature]
@@ -175,24 +179,23 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        if feature_count > 50: break
+        # if feature_count > 50: break
 
     print(f'\nexons: {feature_count}')
-    print(f'multiple exons sets: {exon_set_n}')
+    print(f'multiple exon sets: {exon_set_n}')
 
     # read sequence in genome
     splice = SpliceSite()
+    jtotal = 0
     for sequence in genome:
-        print(f'{sequence.id}')
+        jcount = 0
+        print(f'\nProcessing {sequence.id}')
         # id = sequence.id
         for exon_set in junction[sequence.id]:
             parent = exon_set[0].attribute['Parent']
             strand = exon_set[0].strand
 
-            # if strand == '-':
-            #     continue
-
-            print(f'{parent} strand: {strand}')
+            # print(f'\tgene:{parent} strand: {strand}')
             for i in range(len(exon_set) - 1):
                 if strand == '+':
                     donor = exon_set[i].end
@@ -200,9 +203,15 @@ if __name__ == '__main__':
                 else:
                     acceptor = exon_set[i].end
                     donor = exon_set[i + 1].start
-                print(f'\tdonor {donor} {sequence.seq[donor - 5:donor + 10]}\t'
-                      f'acceptor {acceptor} {sequence.seq[acceptor - 10:acceptor + 4]}')
+
                 splice.add_junction(strand, donor, acceptor, sequence.seq)
-                print(f'\n{splice}')
+                jcount += 1
+        print(f'\t{jcount} junctions added from {sequence.id}')
+        jtotal += jcount
+
+        splice.fieldwidth = 7
+        print(f'\n{splice}')
+
+    print(f'{jtotal} splice junctions analyzed')
 
     exit(0)
