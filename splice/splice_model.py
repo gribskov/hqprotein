@@ -16,7 +16,7 @@ class SpliceSite:
     Frequency matrix for splice donor and acceptor
     ================================================================================================================="""
 
-    def __init__(self, pre=5, post=10):
+    def __init__(self, pre=5, post=10, fieldwidth=4, precision=0):
         """-------------------------------------------------------------------------------------------------------------
         holds position specific counts or frequencies for splice donor and acceptor sites
         pre and post are defined with respect to the exon side with before indicating the exon side
@@ -41,6 +41,8 @@ class SpliceSite:
         self.acceptor_n = 0
         self.pre = pre
         self.post = post
+        self.fieldwidth = fieldwidth
+        self.precision = precision
 
         # initialize donor and acceptor
         self.site_init()
@@ -52,8 +54,8 @@ class SpliceSite:
         :return: True
         -------------------------------------------------------------------------------------------------------------"""
         sitesize = self.pre + self.post
-        self.donor = [{'A': 0, 'C': 0, 'G': 0, 'T': 0} for _ in range(sitesize)]
-        self.acceptor = [{'A': 0, 'C': 0, 'G': 0, 'T': 0} for _ in range(sitesize)]
+        self.donor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
+        self.acceptor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
         self.donor_n = self.acceptor_n = 0
 
         return True
@@ -83,17 +85,27 @@ class SpliceSite:
 
         return self.donor_n, self.acceptor_n
 
-    def __str__(self, fieldwidth=4, precision=1):
+    def __str__(self):
         """-------------------------------------------------------------------------------------------------------------
-        formatted version of site
+        formatted version of site. since __str__() does not accept parameters, the format is included in the object
+        itself (self.fmt)
 
-        :return:
+        :return: str    formatted string with donor and accptor sites
         -------------------------------------------------------------------------------------------------------------"""
-        outstr = 'acceptor:'
-        for base in self.acceptor[0]:
-            outstr +='\t'
-            for column in self.acceptor:
-                outstr += f'{column[base]:fieldwidth.precision}'
+        fmt = f'{self.fieldwidth}.{self.precision}f'
+        pre = self.pre - 1
+        divider = f'{'|':>{self.fieldwidth}s}'
+        outstr = ''
+        for site in ('donor', 'acceptor'):
+            outstr += f'{site}:\n'
+            sitedata = getattr(self, site)
+            for base in sitedata[0]:
+                outstr +=f'\t{base}  '
+                for pos, column in enumerate(sitedata):
+                    outstr += f'{column[base]:{fmt}}'
+                    if pos == pre:
+                        outstr += divider
+                outstr +='\n'
 
         return outstr
 
@@ -142,10 +154,9 @@ if __name__ == '__main__':
     # read sequence in genome
     splice = SpliceSite()
     for sequence in genome:
-        # TODO should return Fasta object not dict
-        print(f'{sequence['id']}')
-        id = sequence['id']
-        for exon_set in junction[sequence['id']]:
+        print(f'{sequence.id}')
+        id = sequence.id
+        for exon_set in junction[sequence.id]:
             parent = exon_set[0].attribute['Parent']
             strand = exon_set[0].strand
 
@@ -156,9 +167,9 @@ if __name__ == '__main__':
             for i in range(len(exon_set) - 1):
                 donor = exon_set[i].end
                 acceptor = exon_set[i + 1].start
-                print(f'\tdonor {donor} {sequence['seq'][donor - 5:donor + 10]}\t'
-                      f'acceptor {acceptor} {sequence['seq'][acceptor - 10:acceptor + 4]}')
-                splice.add_junction(donor, acceptor, sequence['seq'])
+                print(f'\tdonor {donor} {sequence.seq[donor - 5:donor + 10]}\t'
+                      f'acceptor {acceptor} {sequence.seq[acceptor - 10:acceptor + 4]}')
+                splice.add_junction(donor, acceptor, sequence.seq)
                 print(splice)
 
     exit(0)
