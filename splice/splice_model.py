@@ -15,6 +15,7 @@ class SpliceSite:
     """=================================================================================================================
     Frequency matrix for splice donor and acceptor
     ================================================================================================================="""
+    base_complement = str.maketrans('ACGT', 'TGCA')
 
     def __init__(self, pre=5, post=10, fieldwidth=4, precision=0):
         """-------------------------------------------------------------------------------------------------------------
@@ -75,6 +76,7 @@ class SpliceSite:
         self.donor_n += 1
         self.acceptor_n += 1
         if strand == '+':
+            # positive strand splice junctions
             sitepos = 0
             for pos in range(donorpos - self.pre, donorpos + self.post):
                 self.donor[sitepos][sequence[pos]] += 1
@@ -85,7 +87,45 @@ class SpliceSite:
                 self.acceptor[sitepos][sequence[pos]] += 1
                 sitepos += 1
 
+        else:
+            # negative strand splice junctions
+            left = donorpos - self.post - 1
+            right = donorpos + self.pre - 1
+            print(f'{sequence[donorpos - 10:donorpos + 10].translate(SpliceSite.base_complement)}')
+            print(f'{sequence[left:donorpos - 1]}\t{sequence[donorpos - 1:right]}')
+            site = sequence[left:right]
+            print(f'{site}')
+            site = site.translate(SpliceSite.base_complement)[::-1]
+            print(f'{site}')
+
+            sitepos = 0
+            for base in site:
+                self.donor[sitepos][base] += 1
+                sitepos += 1
+
+            left = acceptorpos - self.pre
+            right = acceptorpos + self.post
+            orig = sequence[left:right]
+            site = orig.translate(SpliceSite.base_complement)[::-1]
+            print(f'\nacceptor')
+            print(f'{orig}')
+            print(f'{site}')
+            sitepos = 0
+            for base in site:
+                self.acceptor[sitepos][base] += 1
+                sitepos += 1
+
         return self.donor_n, self.acceptor_n
+
+    @staticmethod
+    def complement(sequence):
+        """-------------------------------------------------------------------------------------------------------------
+        complements but does not reverse the sequence string A->T, C->G, G->C, T->A. No checking for ambiguous or
+        incorrect bases
+
+        :param sequence: str    DNA sequence, 5' to 3'
+        :return: str            complementary strand in 3' to 5' order
+        -------------------------------------------------------------------------------------------------------------"""
 
     def __str__(self):
         """-------------------------------------------------------------------------------------------------------------
@@ -161,13 +201,17 @@ if __name__ == '__main__':
             parent = exon_set[0].attribute['Parent']
             strand = exon_set[0].strand
 
-            if strand == '-':
-                continue
+            # if strand == '-':
+            #     continue
 
             print(f'{parent} strand: {strand}')
             for i in range(len(exon_set) - 1):
-                donor = exon_set[i].end
-                acceptor = exon_set[i + 1].start
+                if strand == '+':
+                    donor = exon_set[i].end
+                    acceptor = exon_set[i + 1].start
+                else:
+                    acceptor = exon_set[i].end
+                    donor = exon_set[i + 1].start
                 print(f'\tdonor {donor} {sequence.seq[donor - 5:donor + 10]}\t'
                       f'acceptor {acceptor} {sequence.seq[acceptor - 10:acceptor + 4]}')
                 splice.add_junction(strand, donor, acceptor, sequence.seq)
