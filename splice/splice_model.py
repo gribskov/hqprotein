@@ -6,6 +6,7 @@ frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
+from math import log
 from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
 from collections import defaultdict
@@ -67,8 +68,7 @@ class SpliceSite:
         uppercase. Currently, no checking for non A,C,G,T bases.
 
         :param donorpos: int        end of donor exon
-        :param acceptorpos: int     beginning of acceptor exon
-        :param strand: strand       strand, '+' or '-'
+        :param acceptorpos: str     strand, '+' or '-'
         :param sequence: str        DNA sequence
         :return: int, int           number of donor/acceptor sequences
         -------------------------------------------------------------------------------------------------------------"""
@@ -126,7 +126,7 @@ class SpliceSite:
             # this is overwritten with 1, but it could be used to get the average number of observations per column
             for pos in range(len(pssm)):
                 total = sum(pssm[pos].values())
-                print(total)
+                # print(total)
 
                 for base in pssm[pos]:
                     freq[freqpos][base] = pssm[pos][base] / total
@@ -138,6 +138,29 @@ class SpliceSite:
             setattr(frequency, jtype + '_n', 1)
 
         return frequency
+
+    def information(self):
+        """-------------------------------------------------------------------------------------------------------------
+        Calculate positional Shannon information for both donor and acceptor
+
+        :return: list, list     positional information for donor and acceptor
+        -------------------------------------------------------------------------------------------------------------"""
+        info = {'donor': [0.0 for _ in range(len(self.donor))],
+                'acceptor': [0.0 for _ in range(len(self.acceptor))]}
+        for jtype in info:
+            pssm = getattr(self, jtype)
+            h = info[jtype]
+
+            for pos in range(len(pssm)):
+                h[pos] = 0.0
+                for base in pssm[pos]:
+                    try:
+                        h[pos] += pssm[pos][base] * log(pssm[pos][base], 2)
+                    except ValueError:
+                        # log zero
+                        pass
+
+        return info
 
     @staticmethod
     def complement(sequence):
@@ -254,5 +277,12 @@ if __name__ == '__main__':
     frequency.fieldwidth = 6
     frequency.precision = 3
     print(f'\n{frequency}')
+
+    h = frequency.information()
+    # print(f'\n{h['donor']}\n{h['acceptor']}')
+    for site in (h['donor'], h['acceptor']):
+        for val in site:
+            print(f'{2+val:6.3f}', end='')
+        print()
 
     exit(0)
