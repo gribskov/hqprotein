@@ -109,6 +109,36 @@ class SpliceSite:
 
         return self.donor_n, self.acceptor_n
 
+    def frequency(self):
+        """------------------------------------------------------------------------------------------------------------
+        Return a new SpliceSite object with counts converted to frequencies.
+
+        :return: SpliceSite     positional probability of base | splice_site
+        -------------------------------------------------------------------------------------------------------------"""
+        frequency = SpliceSite()
+        for jtype in ('donor', 'acceptor'):
+            freqpos = 0
+            pssm = getattr(self, jtype)
+            freq = getattr(frequency, jtype)
+            freq_n = 0.0
+
+            # the frequency of bases at each position is calculated and stored in donor_n and acceptor_n. Currently,
+            # this is overwritten with 1, but it could be used to get the average number of observations per column
+            for pos in range(len(pssm)):
+                total = sum(pssm[pos].values())
+                print(total)
+
+                for base in pssm[pos]:
+                    freq[freqpos][base] = pssm[pos][base] / total
+                    freq_n += freq[freqpos][base]
+
+                freqpos += 1
+
+            # After conversion, the frequency of all columns is 1
+            setattr(frequency, jtype + '_n', 1)
+
+        return frequency
+
     @staticmethod
     def complement(sequence):
         """-------------------------------------------------------------------------------------------------------------
@@ -156,6 +186,8 @@ if __name__ == '__main__':
     gff = GxfSet(file=gff_file, fmt='gff')
     genome = Fasta(filename='data/z.tritici.IP0323.fasta')
 
+    # read exon features from GFF file. Genes with more than one exon have a splice junction and are stored
+    # as a list of exons in junction
     feature_n = gff.feature_get(['exon'])
     junction = defaultdict(list)
     feature_count = 0
@@ -179,12 +211,13 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        # if feature_count > 50: break
+        # TODO remove debug
+        if feature_count > 500: break
 
     print(f'\nexons: {feature_count}')
     print(f'multiple exon sets: {exon_set_n}')
 
-    # read sequence in genome
+    # read one sequence at a time from genome and process multiple exon genes in that sequence
     splice = SpliceSite()
     jtotal = 0
     for sequence in genome:
@@ -209,9 +242,17 @@ if __name__ == '__main__':
         print(f'\t{jcount} junctions added from {sequence.id}')
         jtotal += jcount
 
+        # TODO remove debug
+        break
+
         splice.fieldwidth = 7
         print(f'\n{splice}')
 
     print(f'{jtotal} splice junctions analyzed')
+
+    frequency = splice.frequency()
+    frequency.fieldwidth = 6
+    frequency.precision = 3
+    print(f'\n{frequency}')
 
     exit(0)
