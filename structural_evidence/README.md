@@ -54,8 +54,23 @@ neighboring context to fold? Worth testing.
 | *Cryptococcus neoformans* | Basidiomycota (Agaricomycotina) | FungiDB + proteogenomic validation |
 | *Candida albicans* | Ascomycota (Saccharomycotina) | FungiDB curated, AlphaFold proteome ready |
 
+### Pipeline
+
+1. **parse_cif.py** — Extract per-residue pLDDT from AlphaFold CIF files (B-factor column)
+2. **aggregate_plddt.py** — Compute per-protein stats (mean, median, % above threshold)
+3. **validate_quality.py** — Compare pLDDT distributions between Verified vs Dubious genes
+4. **segment_analysis.py** — Map pLDDT back to individual exons (requires GFF coordinates)
+5. **parse_gff.py** — Full GFF3 parser, deferred until needed for user-provided gene models
+6. **run_pipeline.py** — Orchestrates all steps
+
+For S. cerevisiae we already have pre-extracted proteins and pre-computed
+AlphaFold structures, so steps 1-3 work without the GFF parser. The GFF
+parser becomes necessary when the tool handles arbitrary user-provided
+gene models (extract CDS, translate, run AlphaFold).
+
 ### To Do
-- Figure out data source / organism
-- Parse AlphaFold output (pLDDT per residue)
+- Parse AlphaFold CIF output (pLDDT per residue)
 - Summarize into gene-level score
+- Validate against Verified vs Dubious ORFs in S. cerevisiae
 - Calibration experiment (good vs corrupted models)
+- Segment-level analysis (per-exon pLDDT)
