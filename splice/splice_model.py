@@ -8,6 +8,31 @@ Synopsis
 # Create empty object
 splice = SpliceSite()
 
+# See sample code for reading splice junctions from gff below
+
+# read saved positional probabilities from file
+fq_from_file = SpliceSite()
+
+# convert counts to frequency and print in specific format
+frequency = splice.frequency()
+frequency.fieldwidth = 6
+frequency.precision = 3
+print(f'\n{frequency}')
+
+# Positional Shannon entropy
+h = frequency.information()
+
+# sharpen positional probabilities
+fq_from_file = SpliceSite()
+n = fq_from_file.read('frequency.dat')
+print(f'\n{n} frequencies read from frequency.dat')
+fq_from_file.fieldwidth = 6
+fq_from_file.precision = 3
+
+print(f'Sharpened frequencies')
+fq_from_file.sharpen(2)
+print(fq_from_file)
+
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
 from sys import stderr
