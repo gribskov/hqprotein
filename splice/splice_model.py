@@ -118,7 +118,7 @@ class SpliceSite:
         for jtype in ('donor', 'acceptor'):
             skip = fh.readline()  # first line is donor: or acceptor:
             baseline = {}
-            for base in 'ACGT':
+            for _ in 'ACGT':
                 values = fh.readline().rstrip().split()
                 base = values[0]
                 baseline[base] = values[1:]
@@ -143,6 +143,7 @@ class SpliceSite:
         add a donor/acceptor pair from sequence based on coordinates (from GFF). Input sequences are forced to
         uppercase. Currently, no checking for non A,C,G,T bases.
 
+        :param strand: str          '+' or '-', strand of exons
         :param donorpos: int        end of donor exon
         :param acceptorpos: str     strand, '+' or '-'
         :param sequence: str        DNA sequence
@@ -332,8 +333,8 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        # TODO remove debug
-        if feature_count > 500: break
+        # limit input for debug
+        # if feature_count > 500: break
 
     print(f'\nexons: {feature_count}')
     print(f'multiple exon sets: {exon_set_n}')
@@ -363,8 +364,8 @@ if __name__ == '__main__':
         print(f'\t{jcount} junctions added from {sequence.id}')
         jtotal += jcount
 
-        # TODO remove debug
-        break
+        # limit input for debug
+        # break
 
         splice.fieldwidth = 7
         print(f'\n{splice}')
