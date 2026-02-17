@@ -4,8 +4,13 @@ splice_model.py
 frequency model of splice donor and acceptor based on genome and annotation (GFF3)
 frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
+Synopsis
+# Create empty object
+splice = SpliceSite()
+
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
+from sys import stderr
 from math import log
 from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
@@ -61,6 +66,52 @@ class SpliceSite:
         self.donor_n = self.acceptor_n = 0
 
         return True
+
+    def read(self, filename):
+        """-------------------------------------------------------------------------------------------------------------
+        read a pssm written to a file by print(pssm, file=fh). Format:
+        donor:
+            A   0.279 0.294 0.374 0.385 0.149     | 0.000 0.000 0.668 0.550 0.053 0.107 0.302 0.240 0.275 0.210
+            C   0.294 0.275 0.252 0.172 0.195     | 0.000 0.019 0.042 0.183 0.027 0.156 0.275 0.248 0.275 0.302
+            G   0.229 0.244 0.221 0.183 0.477     | 1.000 0.000 0.248 0.057 0.893 0.069 0.198 0.179 0.137 0.229
+            T   0.198 0.187 0.153 0.260 0.179     | 0.000 0.981 0.042 0.210 0.027 0.668 0.225 0.332 0.313 0.260
+        acceptor:
+            A   0.256 0.267 0.237 0.179 0.156 0.164 0.363 0.053 1.000 0.000     | 0.286 0.218 0.271 0.225 0.252
+            C   0.305 0.290 0.313 0.313 0.244 0.340 0.260 0.718 0.000 0.000     | 0.267 0.321 0.347 0.321 0.313
+            G   0.122 0.191 0.126 0.172 0.164 0.134 0.248 0.011 0.000 1.000     | 0.263 0.202 0.176 0.214 0.214
+            T   0.317 0.252 0.324 0.336 0.435 0.363 0.130 0.218 0.000 0.000     | 0.183 0.260 0.206 0.240 0.221
+
+        :param filename: str    path to a readable file
+        :return: float          number of donor sequences, 1.0 indicates frequencies
+        -------------------------------------------------------------------------------------------------------------"""
+        try:
+            fh = open(filename, 'r')
+        except (IOError, OSError):
+            stderr.write(f'SpliceSite::read - unable to open ({filename}) for reading')
+            exit(1)
+
+        for jtype in ('donor', 'acceptor'):
+            skip = fh.readline()  # first line is donor: or acceptor:
+            baseline = {}
+            for base in 'ACGT':
+                values = fh.readline().rstrip().split()
+                base = values[0]
+                baseline[base] = values[1:]
+
+            pssm = getattr(self, jtype)
+            for base in baseline:
+                sitepos = 0
+                for value in baseline[base]:
+                    if value == '|': continue  # skip |
+
+                    pssm[sitepos][base] = float(value)
+                    sitepos += 1
+
+        # count bases at position self.pre to get donor_n and acceptor_n
+        self.donor_n = sum(self.donor[self.pre].values())
+        self.acceptor_n = sum(self.acceptor[self.pre].values())
+
+        return self.donor_n
 
     def add_junction(self, strand, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
@@ -145,7 +196,7 @@ class SpliceSite:
 
         :return: list, list     positional information for donor and acceptor
         -------------------------------------------------------------------------------------------------------------"""
-        info = {'donor': [0.0 for _ in range(len(self.donor))],
+        info = {'donor'   : [0.0 for _ in range(len(self.donor))],
                 'acceptor': [0.0 for _ in range(len(self.acceptor))]}
         for jtype in info:
             pssm = getattr(self, jtype)
@@ -161,6 +212,28 @@ class SpliceSite:
                         pass
 
         return info
+
+    def sharpen(self, exponent, renormalize=True):
+        """-------------------------------------------------------------------------------------------------------------
+        Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
+
+        :param exponent: float      each value is replaced by value ** exponent
+        :param renormalize: bool    whether to normalize the values by dividing by sum
+        :return: True
+        -------------------------------------------------------------------------------------------------------------"""
+        for jtype in ('donor', 'acceptor'):
+            pssm = getattr(self, jtype)
+            for column in pssm:
+                total = 0
+                for base in column:
+                    column[base] = column[base] ** exponent
+                    total += column[base]
+
+                if renormalize:
+                    for base in column:
+                        column[base] /= total
+
+        return True
 
     @staticmethod
     def complement(sequence):
@@ -279,10 +352,34 @@ if __name__ == '__main__':
     print(f'\n{frequency}')
 
     h = frequency.information()
-    # print(f'\n{h['donor']}\n{h['acceptor']}')
-    for site in (h['donor'], h['acceptor']):
-        for val in site:
-            print(f'{2+val:6.3f}', end='')
-        print()
+    print(f'\nPositional Shannon entropy:')
+    for jtype in ('donor', 'acceptor'):
+        linepos = frequency.pre
+        if jtype == 'acceptor':
+            linepos = frequency.post
+
+        print(f'\n{jtype:<8s}', end='\t')
+        pos = 0
+        for val in h[jtype]:
+            if pos == linepos:
+                print(f'{'|':>6s}', end='')
+            print(f'{2 + val:6.3f}', end='')
+
+            pos += 1
+
+    print()
+
+    with open('frequency.dat', 'w') as fq:
+        print(f'{frequency}', file=fq)
+
+    fq_from_file = SpliceSite()
+    n = fq_from_file.read('frequency.dat')
+    print(f'\n{n} frequencies read from frequency.dat')
+    fq_from_file.fieldwidth = 6
+    fq_from_file.precision = 3
+
+    print(f'Sharpened frequencies')
+    fq_from_file.sharpen(2)
+    print(fq_from_file)
 
     exit(0)
