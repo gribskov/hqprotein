@@ -118,6 +118,18 @@ classDef left text-align:left;
 class genome,intrinsic,homology,structural,integrate left;
 
 ```
+## Progress
+* Codon usage - see class Codon in codon/codon.py:
+  * Codon usage calculated and stored for all three reading frames - see ___codon___
+  * supports both counts and frequencies
+* Splice junction - see class SpliceSite in splice/splice_model.py:
+  * Splice junctions identified from GFF and reference genome.
+  * Acceptor and donor counts for all multi-exon genes (both strands)
+  * Conversion to frequencies
+  * Calculation of positional Shannon entropy
+  * Sharpening of probabilities by raising to power
+  * Write and read tabular format
+  
 ## References
 #### General
 > Fickett JW. Recognition of protein coding regions in DNA sequences. Nucleic Acids Res. 1982 Sep 11;10(17):5303-18. doi: 10.1093/nar/10.17.5303.
