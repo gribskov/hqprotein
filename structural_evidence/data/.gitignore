@@ -1,0 +1,6 @@
+# Data files - too large for git
+# Track folder structure and metadata, ignore actual data
+!*/
+*.*
+!.gitignore
+!METADATA.txt
