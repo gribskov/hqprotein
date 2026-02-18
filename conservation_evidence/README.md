@@ -8,7 +8,8 @@ frame of being a true ORF.
 
 1. Use input example data, for example the unannotated nucleotide sequences (scaffolds, contigs) of *Z. tritici* and BlastX against protein database.
 Use a comprehensive database like Uniprot.
-2. Process the BlastX results to get the associations of correct ORF 
+2. Process the BlastX results to get the associations of correct ORF
+3. Use the latest high-quality *Z. tritici* annotation to confirm the predicted ORF.
 
 ## Ideas
 A protein match that is split across multiple frames, likely indicated a framing error in the assembly.
