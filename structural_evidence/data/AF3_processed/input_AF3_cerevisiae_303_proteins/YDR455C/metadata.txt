@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YDR455C
+Input JSON:    YDR455C.json
+Array Task:    67 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (102 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       67
+Job ID:        15422750
+Partition:     gpu
+Node:          g015
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Thu Feb 26 19:28:21 EST 2026
+Finished:      Thu Feb 26 19:40:53 EST 2026

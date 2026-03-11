@@ -1,0 +1,24 @@
+================== AF3 Run Metadata ==================
+Job Name:      multimerB_NLR_G500_lossCterm
+Input JSON:    multimerB_NLR_G500_lossCterm.json
+Dataset:       pascal_PI655988_multimers
+Array Task:    2 / 3
+Seeds:         1
+Chains:        2
+  Chain A: protein (1028 residues)
+  Chain B: protein (76 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15504552
+Task ID:       2
+Job ID:        15504554
+Partition:     gpu
+Node:          g015
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Wed Mar  4 15:20:54 EST 2026
+Finished:      Wed Mar  4 15:54:21 EST 2026

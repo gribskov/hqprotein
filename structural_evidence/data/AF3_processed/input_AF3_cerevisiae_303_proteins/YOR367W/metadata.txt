@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YOR367W
+Input JSON:    YOR367W.json
+Array Task:    275 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (200 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       275
+Job ID:        15425358
+Partition:     gpu
+Node:          g008
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Fri Feb 27 05:00:01 EST 2026
+Finished:      Fri Feb 27 05:10:58 EST 2026

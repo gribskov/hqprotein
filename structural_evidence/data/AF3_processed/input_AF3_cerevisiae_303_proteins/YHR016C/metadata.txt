@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YHR016C
+Input JSON:    YHR016C.json
+Array Task:    131 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (468 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       131
+Job ID:        15423736
+Partition:     gpu
+Node:          g007
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Thu Feb 26 22:08:12 EST 2026
+Finished:      Thu Feb 26 22:23:36 EST 2026
