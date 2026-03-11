@@ -26,7 +26,9 @@ Use a comprehensive database like Uniprot50.
 Instead of judging each exon independently:
 
 Script 1: Extract subsequences between splice junctions (each exon) and Generate all possible combinations of reading frames and exon pairings
+
 Script 2: Treat the splice junctions as a system: what combination of frames and exon boundaries makes the overall multi-exon protein match most probable?
+
 Script 3: Assign a joint probability to each combination
 
 This turns the problem from "does this exon match a protein?" into "what gene model, considered as a whole, best explains all the BlastX evidence across all exons?"
