@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YER171W
+Input JSON:    YER171W.json
+Array Task:    92 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (778 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       92
+Job ID:        15423135
+Partition:     gpu
+Node:          g009
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Thu Feb 26 20:49:12 EST 2026
+Finished:      Thu Feb 26 21:05:26 EST 2026

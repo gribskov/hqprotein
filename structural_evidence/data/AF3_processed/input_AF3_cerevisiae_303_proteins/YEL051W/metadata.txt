@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YEL051W
+Input JSON:    YEL051W.json
+Array Task:    77 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (256 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       77
+Job ID:        15422910
+Partition:     gpu
+Node:          g015
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Thu Feb 26 20:16:20 EST 2026
+Finished:      Thu Feb 26 20:29:01 EST 2026

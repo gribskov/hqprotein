@@ -1,0 +1,22 @@
+================== AF3 Run Metadata ==================
+Job Name:      YEL053C
+Input JSON:    YEL053C.json
+Array Task:    78 / 303
+Seeds:         1
+Chains:        1
+  Chain A: protein (733 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15421729
+Task ID:       78
+Job ID:        15422911
+Partition:     gpu
+Node:          g005
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Thu Feb 26 20:18:45 EST 2026
+Finished:      Thu Feb 26 20:32:57 EST 2026
