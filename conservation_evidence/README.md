@@ -8,9 +8,11 @@ frame being a true ORF.
 
 1. Use input example data, for example the unannotated nucleotide sequences (scaffolds, contigs) of *Z. tritici* and BlastX against the uniref50 protein database.
 Use a comprehensive database like Uniprot50.
+
 **Logic:** BlastX Gives Reading Frame Evidence.Each BlastX hit tells which reading frame that region of DNA is coding in. I can then associate those hits with candidate ORFs in the DNA.
 
 3. Process the BlastX results to get the associations of correct ORF
+
 **Logic:** ORFs Have Probabilities. Not every ORF is real. For each candidate ORF I can ask:
 
 - How long is it?
