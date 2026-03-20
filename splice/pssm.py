@@ -1,14 +1,13 @@
 """=====================================================================================================================
 pssm.py
-class for storing and manipulating pssm (position specific scoring matrix)
+class for storing and manipulating pssm (position specific scoring matrices)
 
 2026-03-19 gribskov
 ====================================================================================================================="""
 import datetime
 import sys
-from copy import deepcopy
-from math import log2
 import uuid
+from copy import deepcopy
 
 import numpy as np
 
@@ -17,23 +16,46 @@ import numpy as np
 
 class PSSM:
     """=================================================================================================================
+    Position Specific Scoring matrices are a matrix where the rows correspond to characters in a sequence alphabet,
+    columns correspond to positions in a sequence.
 
+    Values can be integer counts, or frequencies (i.e., P(character|position). It is up to you to know what kind of
+    information is stored. One way to discover is to look st PSSM.n which shows the maximum total counts in a column.
+    This will normally be 1.0 for frequencies and a much larger number for counts.
+
+    UUIDs are automatically created and get updated when the count/frequency content changes but this is still a little
+    incomplete. Changes are tracked in the comments
+    TODO add comments for adding counts
+
+    Synopsis:
+    # create a PSSM
+    pssm = PSSM(title='donor', rows='ACGT', offset=pre)
+
+    # add counts from a sequence
+    pssm.add_counts_sequence(site)
+
+    # convert counts to frequencies
+    donor_frequencies = pssm.frequency()
+
+    # calculate positional Shannon entropy in bits (range: 0 - 2 for DNA)
+    I = donor_frequencies.information()
     ================================================================================================================="""
-    # print formats are shared by all pssms
+    # print formats are shared by all pssms via class variables
     fieldwidth=0
     precision=0
 
-    def __init__(self, title='pssm', rows='ACGT', columns=15, offset=0, fwidth=4, fprecision=0):
+    def __init__(self, title='pssm', rows='ACGT', columns=15, offset=0):
         """-------------------------------------------------------------------------------------------------------------
-        uid: str             uid for this pssm; default='pssm'
-        comment: str        any descriptive information
-        creation: str       creation date: YYYY-MM-DD HH:MM:SS
+        uid: str            uid for this pssm; first block of uuid4
+        comment: str        any descriptive information, default='pssm'
+        creation: str       creation date: YYYY-MM-DD HH:MM:SS -> see timestamp to globally change format
         rows: str           alphabet for pssm, usually 'ACGT' or 'ACDEFGHIKLMNPQRSTVWY'; default='ACGT'
         columns: int        number of sequence positions in pssm; default = 15
         offset: int         offset for position to mark for occurrence
         n: int              number of observations; expect 1.0 for a frequency matrix
-        matrix: np array    the actual data, rows are the letters of the alphabet, columns are sequence positions
-        a2i: dict           conversion of sequence characters to integer index
+        matrix: np array    the actual data, rows are the letters of the sequence alphabet, columns are sequence positions
+                            can be either counts or frequencies
+        a2i: dict           for conversion of sequence characters to integer index (used in add_counts_sequence())
         -------------------------------------------------------------------------------------------------------------"""
         self.uid = PSSM.uid()
         self.title = title
@@ -47,17 +69,32 @@ class PSSM:
         self.a2i = {rows[i]: i for i in range(len(rows))}
 
         # __str__ does not take arguments so define fieldwidth and precision within the object. These are now global
-        self.fieldwidth = fwidth
-        self.precision = fprecision
+        # self.fieldwidth = fwidth
+        # self.precision = fprecision
 
     def __str__(self):
         """-------------------------------------------------------------------------------------------------------------
         formatted version of site. since __str__() does not accept parameters, the formatting parameters are  included
         in the object itself as global variables (PSSM.fieldwidth, PSSM.precision)
+        TODO maybe divider should be global so it can be easily changed
 
+        example formatted text (frequency):
+        -----
+        title: acceptor
+        uid: e0c45f62
+        creation: 2026-03-20 121651
+        n: 1.0
+        comment
+            (2026-03-20 122020) copied from 64882c19 (acceptor)
+            (2026-03-20 122020) converted to frequency
+        pssm 4,15
+            A  0.247  0.240  0.217  0.205  0.180  0.189  0.341  0.072  0.999  0.000      |  0.275  0.213  0.249  0.230  0.232
+            C  0.326  0.290  0.306  0.306  0.290  0.332  0.250  0.678  0.000  0.001      |  0.222  0.306  0.333  0.313  0.311
+            G  0.157  0.187  0.173  0.174  0.173  0.125  0.250  0.006  0.000  0.999      |  0.340  0.182  0.190  0.215  0.226
+            T  0.270  0.283  0.304  0.314  0.357  0.354  0.159  0.244  0.000  0.000      |  0.163  0.299  0.228  0.243  0.230
+        -----
         :return: str    formatted string pssm metadata and values
         -------------------------------------------------------------------------------------------------------------"""
-        divider = '|'
         fmt = f'{PSSM.fieldwidth}.{PSSM.precision}f'
         divider = f'{'|':>{PSSM.fieldwidth}s}'
         dividerpos = self.offset
@@ -88,7 +125,8 @@ class PSSM:
     @staticmethod
     def timestamp():
         """-------------------------------------------------------------------------------------------------------------
-        Formatted timestamp for logging
+        Formatted timestamp for logging: 2026-03-20 121651
+        Warning: adding colons will probably break reading the formatted file which uses colons as a marker in parsing
 
         :return: str
         -------------------------------------------------------------------------------------------------------------"""
@@ -98,7 +136,7 @@ class PSSM:
     @staticmethod
     def uid():
         """-------------------------------------------------------------------------------------------------------------
-        generate uuid using uuid4. only the first 8 character group is used
+        generate uuid using uuid4. only the first 8 character group is used. example: e0c45f6
 
         :return:str     uuid string
         -------------------------------------------------------------------------------------------------------------"""
@@ -108,11 +146,21 @@ class PSSM:
         """-------------------------------------------------------------------------------------------------------------
         read a pssm written to a file by __str__ as in print(pssm, file=fh). Format:
         donor:
-            A   0.279 0.294 0.374 0.385 0.149     | 0.000 0.000 0.668 0.550 0.053 0.107 0.302 0.240 0.275 0.210
-            C   0.294 0.275 0.252 0.172 0.195     | 0.000 0.019 0.042 0.183 0.027 0.156 0.275 0.248 0.275 0.302
-            G   0.229 0.244 0.221 0.183 0.477     | 1.000 0.000 0.248 0.057 0.893 0.069 0.198 0.179 0.137 0.229
-            T   0.198 0.187 0.153 0.260 0.179     | 0.000 0.981 0.042 0.210 0.027 0.668 0.225 0.332 0.313 0.260
-
+        example formatted text (frequency):
+        -----
+        title: acceptor
+        uid: e0c45f62
+        creation: 2026-03-20 121651
+        n: 1.0
+        comment
+            (2026-03-20 122020) copied from 64882c19 (acceptor)
+            (2026-03-20 122020) converted to frequency
+        pssm 4,15
+            A  0.247  0.240  0.217  0.205  0.180  0.189  0.341  0.072  0.999  0.000      |  0.275  0.213  0.249  0.230  0.232
+            C  0.326  0.290  0.306  0.306  0.290  0.332  0.250  0.678  0.000  0.001      |  0.222  0.306  0.333  0.313  0.311
+            G  0.157  0.187  0.173  0.174  0.173  0.125  0.250  0.006  0.000  0.999      |  0.340  0.182  0.190  0.215  0.226
+            T  0.270  0.283  0.304  0.314  0.357  0.354  0.159  0.244  0.000  0.000      |  0.163  0.299  0.228  0.243  0.230
+        -----
         :param filename: str    path to a readable file
         :return: float          number of donor sequences, 1.0 indicates frequencies
         -------------------------------------------------------------------------------------------------------------"""
@@ -216,7 +264,6 @@ class PSSM:
         -------------------------------------------------------------------------------------------------------------"""
         frequency = self.copy()
         frequency.comment += f'({PSSM.timestamp()}) converted to frequency\n'
-        pssm = self.matrix
 
         total = np.sum(self.matrix, axis=0)
         for base in range(len(self.rows)):
