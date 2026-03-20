@@ -40,6 +40,7 @@ from math import log
 from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
 from collections import defaultdict
+from pssm import PSSM
 
 
 class SpliceSite:
@@ -48,7 +49,7 @@ class SpliceSite:
     ================================================================================================================="""
     base_complement = str.maketrans('ACGT', 'TGCA')
 
-    def __init__(self, pre=5, post=10, fieldwidth=4, precision=0):
+    def __init__(self, pre=5, post=10):
         """-------------------------------------------------------------------------------------------------------------
         holds position specific counts or frequencies for splice donor and acceptor sites
         pre and post are defined with respect to the exon side with before indicating the exon side
@@ -67,30 +68,23 @@ class SpliceSite:
         pre         bases before site (exon side)
         post        bases after site (intron side)
         -------------------------------------------------------------------------------------------------------------"""
-        self.donor = []
-        self.donor_n = 0
-        self.acceptor = []
-        self.acceptor_n = 0
-        self.pre = pre
-        self.post = post
-        self.fieldwidth = fieldwidth
-        self.precision = precision
+        self.donor = PSSM(id='donor, offset=pre')
+        self.acceptor = PSSM(id='acceptor', offset=post)
 
-        # initialize donor and acceptor
-        self.site_init()
 
-    def site_init(self):
-        """-------------------------------------------------------------------------------------------------------------
-        initialize the count matrices (donor and acceptor), and the total counts (donor_n, acceptor_n)
-
-        :return: True
-        -------------------------------------------------------------------------------------------------------------"""
-        sitesize = self.pre + self.post
-        self.donor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-        self.acceptor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-        self.donor_n = self.acceptor_n = 0
-
-        return True
+    # def site_init(self):
+    #     """-------------------------------------------------------------------------------------------------------------
+    #     should no longer be needed
+    #     initialize the count matrices (donor and acceptor), and the total counts (donor_n, acceptor_n)
+    #
+    #     :return: True
+    #     -------------------------------------------------------------------------------------------------------------"""
+    #     sitesize = self.pre + self.post
+    #     self.donor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
+    #     self.acceptor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
+    #     self.donor_n = self.acceptor_n = 0
+    #
+    #     return True
 
     def read(self, filename):
         """-------------------------------------------------------------------------------------------------------------
@@ -271,29 +265,7 @@ class SpliceSite:
         :return: str            complementary strand in 3' to 5' order
         -------------------------------------------------------------------------------------------------------------"""
 
-    def __str__(self):
-        """-------------------------------------------------------------------------------------------------------------
-        formatted version of site. since __str__() does not accept parameters, the format is included in the object
-        itself (self.fmt)
 
-        :return: str    formatted string with donor and accptor sites
-        -------------------------------------------------------------------------------------------------------------"""
-        fmt = f'{self.fieldwidth}.{self.precision}f'
-        divider = f'{'|':>{self.fieldwidth}s}'
-        dpos = {'donor': self.pre - 1, 'acceptor': self.post - 1}
-        outstr = ''
-        for site in ('donor', 'acceptor'):
-            outstr += f'{site}:\n'
-            sitedata = getattr(self, site)
-            for base in sitedata[0]:
-                outstr += f'\t{base}  '
-                for pos, column in enumerate(sitedata):
-                    outstr += f'{column[base]:{fmt}}'
-                    if pos == dpos[site]:
-                        outstr += divider
-                outstr += '\n'
-
-        return outstr
 
 
 # ======================================================================================================================
