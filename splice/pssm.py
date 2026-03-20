@@ -6,6 +6,7 @@ class for storing and manipulating pssm (position specific scoring matrix)
 ====================================================================================================================="""
 import datetime
 import sys
+from copy import deepcopy
 
 import numpy as np
 
@@ -30,7 +31,7 @@ class PSSM:
         -------------------------------------------------------------------------------------------------------------"""
         self.uid = uid
         self.comment = ''
-        self.creation = datetime.datetime.now().strftime("%Y-%m-%d %H%M%S")
+        self.creation = PSSM.timestamp()
         self.rows = rows
         self.cols = columns
         self.offset = offset
@@ -75,6 +76,16 @@ class PSSM:
             outstr += '\n'
 
         return outstr
+
+    @staticmethod
+    def timestamp():
+        """-------------------------------------------------------------------------------------------------------------
+        Formatted timestamp for logging
+
+        :return: str
+        -------------------------------------------------------------------------------------------------------------"""
+        ftime = datetime.datetime.now().strftime("%Y-%m-%d %H%M%S")
+        return ftime
 
     def read(self, filename):
         """-------------------------------------------------------------------------------------------------------------
@@ -151,6 +162,79 @@ class PSSM:
         self.n = max(np.sum(self.matrix, axis=0))
         return self.n
 
+    def copy(self):
+        """-------------------------------------------------------------------------------------------------------------
+
+        :return:
+        -------------------------------------------------------------------------------------------------------------"""
+        frequency = deepcopy(self)
+        frequency.comment += f'({PSSM.timestamp()}) copied from {self.uid}\n'
+        return frequency
+
+    def frequency(self):
+        """------------------------------------------------------------------------------------------------------------
+        Return a new PSSM object with counts converted to frequencies.
+
+        :return: PSSM     positional probability of base | splice_site
+        -------------------------------------------------------------------------------------------------------------"""
+        frequency = self.copy()
+        frequency.comment += f'({PSSM.timestamp()}) converted to frequency\n'
+        pssm = self.matrix
+
+        total = np.sum(self.matrix, axis=0)
+        for base in range(len(self.rows)):
+            frequency.matrix[base, :] /= total
+
+        frequency.set_n()
+
+        return frequency
+
+    def information(self):
+        """-------------------------------------------------------------------------------------------------------------
+        Calculate positional Shannon information for both donor and acceptor
+
+        :return: list, list     positional information for donor and acceptor
+        -------------------------------------------------------------------------------------------------------------"""
+        info = {'donor': [0.0 for _ in range(len(self.donor))],
+                'acceptor': [0.0 for _ in range(len(self.acceptor))]}
+        for jtype in info:
+            pssm = getattr(self, jtype)
+            h = info[jtype]
+
+            for pos in range(len(pssm)):
+                h[pos] = 0.0
+                for base in pssm[pos]:
+                    try:
+                        h[pos] += pssm[pos][base] * log(pssm[pos][base], 2)
+                    except ValueError:
+                        # log zero
+                        pass
+
+        return info
+
+    def sharpen(self, exponent, renormalize=True):
+        """-------------------------------------------------------------------------------------------------------------
+        Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
+
+        :param exponent: float      each value is replaced by value ** exponent
+        :param renormalize: bool    whether to normalize the values by dividing by sum
+        :return: True
+        -------------------------------------------------------------------------------------------------------------"""
+        for jtype in ('donor', 'acceptor'):
+            pssm = getattr(self, jtype)
+            for column in pssm:
+                total = 0
+                for base in column:
+                    column[base] = column[base] ** exponent
+                    total += column[base]
+
+                if renormalize:
+                    for base in column:
+                        column[base] /= total
+
+        return True
+
+
 # ======================================================================================================================
 # Testing
 # ======================================================================================================================
@@ -172,5 +256,10 @@ if __name__ == '__main__':
     pssm_from_file = PSSM()
     pssm_from_file.read('test.pssm')
     print(pssm_from_file)
+
+    frequency = pssm_from_file.frequency()
+    frequency.fieldwidth = 7
+    frequency.precision = 3
+    print(frequency)
 
     exit(0)
