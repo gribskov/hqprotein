@@ -209,31 +209,30 @@ class PSSM:
         :return: list     positional information for pssm
         -------------------------------------------------------------------------------------------------------------"""
         # h = np.zeros((len(self.rows),self.cols), dtype=float)
-        matrix = self.matrix
         base = np.log2(len(self.rows))
-        h = self.matrix * np.log2(self.matrix)
-        h = np.nan_to_num(h, nan=0.0)
-        return base + np.sum(np.nan_to_num(h, nan=0.0),axis=0)
+        with np.errstate(divide='ignore'):
+            # ignore 'divide by zero encountered in log2' errors
+            h = self.matrix * np.nan_to_num(np.log2(self.matrix),nan=0.0)
+        # h = np.nan_to_num(h, nan=0.0)
+        return base + np.sum(h,axis=0)
 
     def sharpen(self, exponent, renormalize=True):
         """-------------------------------------------------------------------------------------------------------------
         Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
+        Sharpening updates the uid
 
         :param exponent: float      each value is replaced by value ** exponent
         :param renormalize: bool    whether to normalize the values by dividing by sum
         :return: True
         -------------------------------------------------------------------------------------------------------------"""
-        for jtype in ('donor', 'acceptor'):
-            pssm = getattr(self, jtype)
-            for column in pssm:
-                total = 0
-                for base in column:
-                    column[base] = column[base] ** exponent
-                    total += column[base]
+        uid = self.uid
+        self.uid = PSSM.uid()
+        self.comment += f'({PSSM.timestamp()}) sharpened with exponent={exponent}, source= {uid} ({self.title})\n'
+        matrix = self.matrix
+        matrix **= exponent
 
-                if renormalize:
-                    for base in column:
-                        column[base] /= total
+        if renormalize:
+            matrix /= np.sum(self.matrix, axis=0)
 
         return True
 
@@ -248,24 +247,43 @@ if __name__ == '__main__':
     donor.comment += 'comment1\n\ncomment2\n'
     print(donor)
 
+    # fill with sequential values and print to file
     pssm = np.array([i for i in range(20)])
     pssm = np.resize(pssm, (4, 5))
     donor.matrix = pssm
-    # donor.set_n()
     out = open('test.pssm', 'w')
     print(donor, file=out)
     out.close()
 
+    # reread file
     pssm_from_file = PSSM()
     pssm_from_file.read('test.pssm')
     print(pssm_from_file)
 
+    # frequency matrix
     frequency = pssm_from_file.frequency()
     frequency.fieldwidth = 7
     frequency.precision = 3
     print(frequency)
 
+    # positional information content
     I = frequency.information()
     print(I)
+    fmt = f'{frequency.fieldwidth}.{frequency.precision}f'
+    fI = '\t '
+    for i in I:
+        fI += f'{i:{fmt}}'
+    print(fI)
+
+    # frequency sharpenning
+    frequency.sharpen(1.3, renormalize=True)
+    print(frequency)
+    I = frequency.information()
+    print(I)
+    fmt = f'{frequency.fieldwidth}.{frequency.precision}f'
+    fI = '\t '
+    for i in I:
+        fI += f'{i:{fmt}}'
+    print(fI)
 
     exit(0)
