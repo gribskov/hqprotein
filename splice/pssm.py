@@ -7,6 +7,7 @@ class for storing and manipulating pssm (position specific scoring matrix)
 import datetime
 import sys
 from copy import deepcopy
+from math import log2
 import uuid
 
 import numpy as np
@@ -203,26 +204,16 @@ class PSSM:
 
     def information(self):
         """-------------------------------------------------------------------------------------------------------------
-        Calculate positional Shannon information for both donor and acceptor
+        Calculate positional Shannon information for self.matrix
 
-        :return: list, list     positional information for donor and acceptor
+        :return: list     positional information for pssm
         -------------------------------------------------------------------------------------------------------------"""
-        info = {'donor': [0.0 for _ in range(len(self.donor))],
-                'acceptor': [0.0 for _ in range(len(self.acceptor))]}
-        for jtype in info:
-            pssm = getattr(self, jtype)
-            h = info[jtype]
-
-            for pos in range(len(pssm)):
-                h[pos] = 0.0
-                for base in pssm[pos]:
-                    try:
-                        h[pos] += pssm[pos][base] * log(pssm[pos][base], 2)
-                    except ValueError:
-                        # log zero
-                        pass
-
-        return info
+        # h = np.zeros((len(self.rows),self.cols), dtype=float)
+        matrix = self.matrix
+        base = np.log2(len(self.rows))
+        h = self.matrix * np.log2(self.matrix)
+        h = np.nan_to_num(h, nan=0.0)
+        return base + np.sum(np.nan_to_num(h, nan=0.0),axis=0)
 
     def sharpen(self, exponent, renormalize=True):
         """-------------------------------------------------------------------------------------------------------------
@@ -273,5 +264,8 @@ if __name__ == '__main__':
     frequency.fieldwidth = 7
     frequency.precision = 3
     print(frequency)
+
+    I = frequency.information()
+    print(I)
 
     exit(0)
