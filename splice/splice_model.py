@@ -40,16 +40,19 @@ from math import log
 from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
 from collections import defaultdict
+import numpy as np
 from pssm import PSSM
 
 
 class SpliceSite:
     """=================================================================================================================
-    Frequency matrix for splice donor and acceptor
+    Frequency matrices for splice donor and acceptor
     ================================================================================================================="""
     base_complement = str.maketrans('ACGT', 'TGCA')
+    dna = 'ACGT'
+    protein = 'ACDEFGHIKLMNPQRSTVWY'
 
-    def __init__(self, pre=5, post=10):
+    def __init__(self, pre=5, post=10, seqtype='dna'):
         """-------------------------------------------------------------------------------------------------------------
         holds position specific counts or frequencies for splice donor and acceptor sites
         pre and post are defined with respect to the exon side with before indicating the exon side
@@ -63,74 +66,18 @@ class SpliceSite:
 
         donor       position specific counts
         acceptor    position specific counts
-        donor_n     count of donor examples; use to calculate frequencies
-        acceptor_n  count of acceptor examples; use to calculate frequencies
         pre         bases before site (exon side)
         post        bases after site (intron side)
         -------------------------------------------------------------------------------------------------------------"""
-        self.donor = PSSM(id='donor, offset=pre')
-        self.acceptor = PSSM(id='acceptor', offset=post)
-
-
-    # def site_init(self):
-    #     """-------------------------------------------------------------------------------------------------------------
-    #     should no longer be needed
-    #     initialize the count matrices (donor and acceptor), and the total counts (donor_n, acceptor_n)
-    #
-    #     :return: True
-    #     -------------------------------------------------------------------------------------------------------------"""
-    #     sitesize = self.pre + self.post
-    #     self.donor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-    #     self.acceptor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-    #     self.donor_n = self.acceptor_n = 0
-    #
-    #     return True
-
-    def read(self, filename):
-        """-------------------------------------------------------------------------------------------------------------
-        read a pssm written to a file by print(pssm, file=fh). Format:
-        donor:
-            A   0.279 0.294 0.374 0.385 0.149     | 0.000 0.000 0.668 0.550 0.053 0.107 0.302 0.240 0.275 0.210
-            C   0.294 0.275 0.252 0.172 0.195     | 0.000 0.019 0.042 0.183 0.027 0.156 0.275 0.248 0.275 0.302
-            G   0.229 0.244 0.221 0.183 0.477     | 1.000 0.000 0.248 0.057 0.893 0.069 0.198 0.179 0.137 0.229
-            T   0.198 0.187 0.153 0.260 0.179     | 0.000 0.981 0.042 0.210 0.027 0.668 0.225 0.332 0.313 0.260
-        acceptor:
-            A   0.256 0.267 0.237 0.179 0.156 0.164 0.363 0.053 1.000 0.000     | 0.286 0.218 0.271 0.225 0.252
-            C   0.305 0.290 0.313 0.313 0.244 0.340 0.260 0.718 0.000 0.000     | 0.267 0.321 0.347 0.321 0.313
-            G   0.122 0.191 0.126 0.172 0.164 0.134 0.248 0.011 0.000 1.000     | 0.263 0.202 0.176 0.214 0.214
-            T   0.317 0.252 0.324 0.336 0.435 0.363 0.130 0.218 0.000 0.000     | 0.183 0.260 0.206 0.240 0.221
-
-        :param filename: str    path to a readable file
-        :return: float          number of donor sequences, 1.0 indicates frequencies
-        -------------------------------------------------------------------------------------------------------------"""
-        try:
-            fh = open(filename, 'r')
-        except (IOError, OSError):
-            stderr.write(f'SpliceSite::read - unable to open ({filename}) for reading')
-            exit(1)
-
-        for jtype in ('donor', 'acceptor'):
-            skip = fh.readline()  # first line is donor: or acceptor:
-            baseline = {}
-            for _ in 'ACGT':
-                values = fh.readline().rstrip().split()
-                base = values[0]
-                baseline[base] = values[1:]
-
-            pssm = getattr(self, jtype)
-            for base in baseline:
-                sitepos = 0
-                for value in baseline[base]:
-                    if value == '|': continue  # skip |
-
-                    pssm[sitepos][base] = float(value)
-                    sitepos += 1
-
-        # count bases at position self.pre to get donor_n and acceptor_n
-        self.donor_n = sum(self.donor[self.pre].values())
-        self.acceptor_n = sum(self.acceptor[self.pre].values())
-
-        return self.donor_n
+        self.donor = PSSM(title='donor, offset=pre')
+        self.acceptor = PSSM(title='acceptor', offset=post)
+        self.pre = pre
+        self.post = post
+        if seqtype == 'dna':
+            # convert sequence characters to integer index
+            alphabet = getattr(self, seqtype)
+            a2i = {alphabet[i]: i for i in range(len(alphabet))}
+        self.a2i = a2i
 
     def add_junction(self, strand, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
@@ -144,8 +91,8 @@ class SpliceSite:
         :return: int, int           number of donor/acceptor sequences
         -------------------------------------------------------------------------------------------------------------"""
         sequence = sequence.upper()
-        self.donor_n += 1
-        self.acceptor_n += 1
+        # self.donor_n += 1
+        # self.acceptor_n += 1
         left = {}
         right = {}
         if strand == '+':
@@ -165,107 +112,34 @@ class SpliceSite:
             # a = sequence[left['acceptor']:right['acceptor']].translate(SpliceSite.base_complement)[::-1]
             # print(f'{strand}\t{d}\t{a}')
 
+        sitepos = 0
         for jtype in ('donor', 'acceptor'):
-            sitepos = 0
-            pssm = getattr(self, jtype)
-
             site = sequence[left[jtype]:right[jtype]]
+            pssm = getattr(self, jtype)
             if strand != '+':
                 # reverse complement - strand
                 site = site.translate(SpliceSite.base_complement)[::-1]
 
-            for base in site:
-                pssm[sitepos][base] += 1
-                sitepos += 1
+            sarr = np.array(list(site))
+            count = np.zeros((4, len(site)), dtype=int)
+            a2i = self.a2i
+            for base in a2i:
+                mask = sarr == base
+                count[a2i[base], mask] += 1
 
-        return self.donor_n, self.acceptor_n
+            pssm.matrix += count
 
-    def frequency(self):
-        """------------------------------------------------------------------------------------------------------------
-        Return a new SpliceSite object with counts converted to frequencies.
+        return self.donor.n, self.acceptor.n
 
-        :return: SpliceSite     positional probability of base | splice_site
-        -------------------------------------------------------------------------------------------------------------"""
-        frequency = SpliceSite()
-        for jtype in ('donor', 'acceptor'):
-            freqpos = 0
-            pssm = getattr(self, jtype)
-            freq = getattr(frequency, jtype)
-            freq_n = 0.0
-
-            # the frequency of bases at each position is calculated and stored in donor_n and acceptor_n. Currently,
-            # this is overwritten with 1, but it could be used to get the average number of observations per column
-            for pos in range(len(pssm)):
-                total = sum(pssm[pos].values())
-                # print(total)
-
-                for base in pssm[pos]:
-                    freq[freqpos][base] = pssm[pos][base] / total
-                    freq_n += freq[freqpos][base]
-
-                freqpos += 1
-
-            # After conversion, the frequency of all columns is 1
-            setattr(frequency, jtype + '_n', 1)
-
-        return frequency
-
-    def information(self):
-        """-------------------------------------------------------------------------------------------------------------
-        Calculate positional Shannon information for both donor and acceptor
-
-        :return: list, list     positional information for donor and acceptor
-        -------------------------------------------------------------------------------------------------------------"""
-        info = {'donor'   : [0.0 for _ in range(len(self.donor))],
-                'acceptor': [0.0 for _ in range(len(self.acceptor))]}
-        for jtype in info:
-            pssm = getattr(self, jtype)
-            h = info[jtype]
-
-            for pos in range(len(pssm)):
-                h[pos] = 0.0
-                for base in pssm[pos]:
-                    try:
-                        h[pos] += pssm[pos][base] * log(pssm[pos][base], 2)
-                    except ValueError:
-                        # log zero
-                        pass
-
-        return info
-
-    def sharpen(self, exponent, renormalize=True):
-        """-------------------------------------------------------------------------------------------------------------
-        Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
-
-        :param exponent: float      each value is replaced by value ** exponent
-        :param renormalize: bool    whether to normalize the values by dividing by sum
-        :return: True
-        -------------------------------------------------------------------------------------------------------------"""
-        for jtype in ('donor', 'acceptor'):
-            pssm = getattr(self, jtype)
-            for column in pssm:
-                total = 0
-                for base in column:
-                    column[base] = column[base] ** exponent
-                    total += column[base]
-
-                if renormalize:
-                    for base in column:
-                        column[base] /= total
-
-        return True
-
-    @staticmethod
-    def complement(sequence):
-        """-------------------------------------------------------------------------------------------------------------
-        complements but does not reverse the sequence string A->T, C->G, G->C, T->A. No checking for ambiguous or
-        incorrect bases
-
-        :param sequence: str    DNA sequence, 5' to 3'
-        :return: str            complementary strand in 3' to 5' order
-        -------------------------------------------------------------------------------------------------------------"""
-
-
+    # @staticmethod
+    # def complement(sequence):
+    #     """-------------------------------------------------------------------------------------------------------------
+    #     complements but does not reverse the sequence string A->T, C->G, G->C, T->A. No checking for ambiguous or
+    #     incorrect bases
+    #
+    #     :param sequence: str    DNA sequence, 5' to 3'
+    #     :return: str            complementary strand in 3' to 5' order
+    #     -------------------------------------------------------------------------------------------------------------"""
 
 
 # ======================================================================================================================
@@ -305,8 +179,8 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        # limit input for debug
-        # if feature_count > 500: break
+        # TODO remove limit input for debug
+        if feature_count > 10: break
 
     print(f'\nexons: {feature_count}')
     print(f'multiple exon sets: {exon_set_n}')
@@ -336,8 +210,8 @@ if __name__ == '__main__':
         print(f'\t{jcount} junctions added from {sequence.id}')
         jtotal += jcount
 
-        # limit input for debug
-        # break
+        # TODO remove limit input for debug
+        break
 
         splice.fieldwidth = 7
         print(f'\n{splice}')
