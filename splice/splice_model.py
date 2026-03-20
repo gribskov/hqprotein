@@ -69,7 +69,7 @@ class SpliceSite:
         pre         bases before site (exon side)
         post        bases after site (intron side)
         -------------------------------------------------------------------------------------------------------------"""
-        self.donor = PSSM(title='donor, offset=pre')
+        self.donor = PSSM(title='donor', offset=pre)
         self.acceptor = PSSM(title='acceptor', offset=post)
         self.pre = pre
         self.post = post
@@ -120,26 +120,9 @@ class SpliceSite:
                 # reverse complement - strand
                 site = site.translate(SpliceSite.base_complement)[::-1]
 
-            sarr = np.array(list(site))
-            count = np.zeros((4, len(site)), dtype=int)
-            a2i = self.a2i
-            for base in a2i:
-                mask = sarr == base
-                count[a2i[base], mask] += 1
-
-            pssm.matrix += count
+            pssm.add_counts_sequence(site)
 
         return self.donor.n, self.acceptor.n
-
-    # @staticmethod
-    # def complement(sequence):
-    #     """-------------------------------------------------------------------------------------------------------------
-    #     complements but does not reverse the sequence string A->T, C->G, G->C, T->A. No checking for ambiguous or
-    #     incorrect bases
-    #
-    #     :param sequence: str    DNA sequence, 5' to 3'
-    #     :return: str            complementary strand in 3' to 5' order
-    #     -------------------------------------------------------------------------------------------------------------"""
 
 
 # ======================================================================================================================
@@ -179,8 +162,8 @@ if __name__ == '__main__':
 
         current = feature.attribute['Parent']
 
-        # TODO remove limit input for debug
-        if feature_count > 10: break
+        # # TODO remove limit input for debug
+        # if feature_count > 500: break
 
     print(f'\nexons: {feature_count}')
     print(f'multiple exon sets: {exon_set_n}')
@@ -211,47 +194,56 @@ if __name__ == '__main__':
         jtotal += jcount
 
         # TODO remove limit input for debug
-        break
+        # break
 
-        splice.fieldwidth = 7
-        print(f'\n{splice}')
 
     print(f'{jtotal} splice junctions analyzed')
 
-    frequency = splice.frequency()
-    frequency.fieldwidth = 6
-    frequency.precision = 3
-    print(f'\n{frequency}')
+    print(f'\n{'#'*80}\n* counts\n{'#'*80}')
+    maxval = f'{int(np.max(splice.donor.matrix))}'
+    PSSM.fieldwidth = len(maxval) + 2
+    PSSM.precision = 0
+    print(splice.donor)
+    print(splice.acceptor)
 
-    h = frequency.information()
-    print(f'\nPositional Shannon entropy:')
-    for jtype in ('donor', 'acceptor'):
-        linepos = frequency.pre
-        if jtype == 'acceptor':
-            linepos = frequency.post
+    print(f'n{'#'*80}\n* frequency\n{'#'*80}')
+    PSSM.fieldwidth = 7
+    PSSM.precision = 3
+    donor_freq = splice.donor.frequency()
+    acceptor_freq = splice.acceptor.frequency()
+    print(donor_freq)
+    print(acceptor_freq)
 
-        print(f'\n{jtype:<8s}', end='\t')
-        pos = 0
-        for val in h[jtype]:
-            if pos == linepos:
-                print(f'{'|':>6s}', end='')
-            print(f'{2 + val:6.3f}', end='')
+    print(f'n{'#'*80}\n# Positional Shannon entropy\n{'#'*80}')
+    # positional information content
+    I = donor_freq.information()
+    J = acceptor_freq.information()
+    # print(I)
+    fmt = f'{PSSM.fieldwidth}.{PSSM.precision}f'
+    print('\ndonor')
+    fI = '\t '
+    for i in I:
+        fI += f'{i:{fmt}}'
+    print(fI)
+    print('\nacceptor')
+    fJ = '\t '
+    for j in J:
+        fJ += f'{j:{fmt}}'
+    print(fJ)
 
-            pos += 1
+    with open('donor.dat', 'w') as fq:
+        print(f'{donor_freq}', file=fq)
+    with open('acceptor.dat', 'w') as fq:
+        print(f'{acceptor_freq}', file=fq)
 
-    print()
+    # fq_from_file = SpliceSite()
+    # n = fq_from_file.read('frequency.dat')
+    # print(f'\n{n} frequencies read from frequency.dat')
+    # fq_from_file.fieldwidth = 6
+    # fq_from_file.precision = 3
 
-    with open('frequency.dat', 'w') as fq:
-        print(f'{frequency}', file=fq)
-
-    fq_from_file = SpliceSite()
-    n = fq_from_file.read('frequency.dat')
-    print(f'\n{n} frequencies read from frequency.dat')
-    fq_from_file.fieldwidth = 6
-    fq_from_file.precision = 3
-
-    print(f'Sharpened frequencies')
-    fq_from_file.sharpen(2)
-    print(fq_from_file)
+    # print(f'Sharpened frequencies')
+    # fq_from_file.sharpen(2)
+    # print(fq_from_file)
 
     exit(0)
