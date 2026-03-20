@@ -19,6 +19,9 @@ class PSSM:
     """=================================================================================================================
 
     ================================================================================================================="""
+    # print formats are shared by all pssms
+    fieldwidth=0
+    precision=0
 
     def __init__(self, title='pssm', rows='ACGT', columns=15, offset=0, fwidth=4, fprecision=0):
         """-------------------------------------------------------------------------------------------------------------
@@ -30,6 +33,7 @@ class PSSM:
         offset: int         offset for position to mark for occurrence
         n: int              number of observations; expect 1.0 for a frequency matrix
         matrix: np array    the actual data, rows are the letters of the alphabet, columns are sequence positions
+        a2i: dict           conversion of sequence characters to integer index
         -------------------------------------------------------------------------------------------------------------"""
         self.uid = PSSM.uid()
         self.title = title
@@ -40,21 +44,22 @@ class PSSM:
         self.offset = offset
         self.n = 0
         self.matrix = np.zeros((len(rows), columns), dtype=np.float64)
+        self.a2i = {rows[i]: i for i in range(len(rows))}
 
-        # __str__ does not take arguments so define fieldwidth and precision within the object
+        # __str__ does not take arguments so define fieldwidth and precision within the object. These are now global
         self.fieldwidth = fwidth
         self.precision = fprecision
 
     def __str__(self):
         """-------------------------------------------------------------------------------------------------------------
         formatted version of site. since __str__() does not accept parameters, the formatting parameters are  included
-        in the object itself (self.fieldwidth, self.precision)
+        in the object itself as global variables (PSSM.fieldwidth, PSSM.precision)
 
         :return: str    formatted string pssm metadata and values
         -------------------------------------------------------------------------------------------------------------"""
         divider = '|'
-        fmt = f'{self.fieldwidth}.{self.precision}f'
-        divider = f'{'|':>{self.fieldwidth}s}'
+        fmt = f'{PSSM.fieldwidth}.{PSSM.precision}f'
+        divider = f'{'|':>{PSSM.fieldwidth}s}'
         dividerpos = self.offset
 
         self.set_n()
@@ -73,7 +78,7 @@ class PSSM:
             # for pos in range(len(row)):
             for pos, value in enumerate(row):
                 if pos == dividerpos:
-                    outstr += f'{divider:{self.fieldwidth}}'
+                    outstr += f'{divider:{PSSM.fieldwidth}}'
 
                 outstr += f'{value:{fmt}}'
             outstr += '\n'
@@ -184,6 +189,25 @@ class PSSM:
         frequency.comment += f'({PSSM.timestamp()}) copied from {self.uid} ({self.title})\n'
         return frequency
 
+    def add_counts_sequence(self, sequence):
+        """-------------------------------------------------------------------------------------------------------------
+        Add sequence counts to PSSM. be careful that your pssm has not been converted to frequency. increments pssm.n,
+        the count of bases at each position
+
+        :param sequence: str        DNA or protein sequence
+        :return: int                count of bases at each position
+        -------------------------------------------------------------------------------------------------------------"""
+        sarr = np.array(list(sequence))
+        count = np.zeros((4, len(sequence)), dtype=int)
+        a2i = self.a2i
+        for base in a2i:
+            mask = sarr == base
+            count[a2i[base], mask] += 1
+
+        self.matrix += count
+        self.n += 1
+        return self.n
+
     def frequency(self):
         """------------------------------------------------------------------------------------------------------------
         Return a new PSSM object with counts converted to frequencies.
@@ -212,9 +236,9 @@ class PSSM:
         base = np.log2(len(self.rows))
         with np.errstate(divide='ignore'):
             # ignore 'divide by zero encountered in log2' errors
-            h = self.matrix * np.nan_to_num(np.log2(self.matrix),nan=0.0)
+            h = self.matrix * np.nan_to_num(np.log2(self.matrix), nan=0.0)
         # h = np.nan_to_num(h, nan=0.0)
-        return base + np.sum(h,axis=0)
+        return base + np.sum(h, axis=0)
 
     def sharpen(self, exponent, renormalize=True):
         """-------------------------------------------------------------------------------------------------------------
@@ -275,7 +299,7 @@ if __name__ == '__main__':
         fI += f'{i:{fmt}}'
     print(fI)
 
-    # frequency sharpenning
+    # frequency sharpening
     frequency.sharpen(1.3, renormalize=True)
     print(frequency)
     I = frequency.information()
