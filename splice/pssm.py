@@ -7,6 +7,7 @@ class for storing and manipulating pssm (position specific scoring matrix)
 import datetime
 import sys
 from copy import deepcopy
+import uuid
 
 import numpy as np
 
@@ -18,7 +19,7 @@ class PSSM:
 
     ================================================================================================================="""
 
-    def __init__(self, uid='pssm', rows='ACGT', columns=15, offset=0, fwidth=4, fprecision=0):
+    def __init__(self, title='pssm', rows='ACGT', columns=15, offset=0, fwidth=4, fprecision=0):
         """-------------------------------------------------------------------------------------------------------------
         uid: str             uid for this pssm; default='pssm'
         comment: str        any descriptive information
@@ -29,7 +30,8 @@ class PSSM:
         n: int              number of observations; expect 1.0 for a frequency matrix
         matrix: np array    the actual data, rows are the letters of the alphabet, columns are sequence positions
         -------------------------------------------------------------------------------------------------------------"""
-        self.uid = uid
+        self.uid = PSSM.uid()
+        self.title = title
         self.comment = ''
         self.creation = PSSM.timestamp()
         self.rows = rows
@@ -55,7 +57,7 @@ class PSSM:
         dividerpos = self.offset
 
         self.set_n()
-        outstr = f'uid: {self.uid}\ncreation: {self.creation}\nn: {self.n}\n'
+        outstr = f'title: {self.title}\nuid: {self.uid}\ncreation: {self.creation}\nn: {self.n}\n'
         all_comments = self.comment.split('\n')
         if all_comments:
             outstr += f'comment\n'
@@ -86,6 +88,15 @@ class PSSM:
         -------------------------------------------------------------------------------------------------------------"""
         ftime = datetime.datetime.now().strftime("%Y-%m-%d %H%M%S")
         return ftime
+
+    @staticmethod
+    def uid():
+        """-------------------------------------------------------------------------------------------------------------
+        generate uuid using uuid4. only the first 8 character group is used
+
+        :return:str     uuid string
+        -------------------------------------------------------------------------------------------------------------"""
+        return str(uuid.uuid4())[:8]
 
     def read(self, filename):
         """-------------------------------------------------------------------------------------------------------------
@@ -168,7 +179,8 @@ class PSSM:
         :return:
         -------------------------------------------------------------------------------------------------------------"""
         frequency = deepcopy(self)
-        frequency.comment += f'({PSSM.timestamp()}) copied from {self.uid}\n'
+        frequency.uid = PSSM.uid()
+        frequency.comment += f'({PSSM.timestamp()}) copied from {self.uid} ({self.title})\n'
         return frequency
 
     def frequency(self):
@@ -240,7 +252,7 @@ class PSSM:
 # ======================================================================================================================
 if __name__ == '__main__':
     # create a small pssm
-    donor = PSSM(uid='donor', rows='ACGT', columns=5)
+    donor = PSSM(title='donor', rows='ACGT', columns=5)
     donor.offset = 2
     donor.comment += 'comment1\n\ncomment2\n'
     print(donor)
