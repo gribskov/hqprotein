@@ -287,6 +287,26 @@ class PSSM:
         # h = np.nan_to_num(h, nan=0.0)
         return base + np.sum(h, axis=0)
 
+    def logtransform(self, zeroval=-10.0):
+        """-------------------------------------------------------------------------------------------------------------
+        convert the pssm matix to log2 form. Zeroes are converted to the zeroval. -10 is 0.001 in log2.
+
+        :param zero: float      value to use for zeroes
+        :return: int            number of -inf value replace by zeroval
+        -------------------------------------------------------------------------------------------------------------"""
+        # Ignore the divide by zero warning temporarily
+        pssm = self.matrix
+        with np.errstate(divide='ignore'):
+            pssm = np.log2(pssm)
+
+        # Replace -inf with a very low number (e.g., -10)
+        neginfmask = np.isneginf(pssm)
+        infcount = np.count_nonzero(neginfmask)
+        pssm[neginfmask] = -10.0
+
+        self.matrix = pssm
+        return infcount
+
     def sharpen(self, exponent, renormalize=True):
         """-------------------------------------------------------------------------------------------------------------
         Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
