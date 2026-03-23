@@ -5,50 +5,47 @@ frequency model of splice donor and acceptor based on genome and annotation (GFF
 frequencies will be P(base(pos)|acceptor) and P(base(pos)|donor)
 
 Synopsis
-# Create empty object
+# Create empty SpliceSite object
 splice = SpliceSite()
 
-# See sample code for reading splice junctions from gff below
-
-# read saved positional probabilities from file
-fq_from_file = SpliceSite()
-
-# convert counts to frequency and print in specific format
-frequency = splice.frequency()
-frequency.fieldwidth = 6
-frequency.precision = 3
-print(f'\n{frequency}')
-
-# Positional Shannon entropy
-h = frequency.information()
-
-# sharpen positional probabilities
-fq_from_file = SpliceSite()
-n = fq_from_file.read('frequency.dat')
-print(f'\n{n} frequencies read from frequency.dat')
-fq_from_file.fieldwidth = 6
-fq_from_file.precision = 3
-
-print(f'Sharpened frequencies')
-fq_from_file.sharpen(2)
-print(fq_from_file)
+1. Read exons from GFF and select transcripts with at least two exons
+2. Extract donor and acceptor sites from the reference genome
+    a. Read chromosomes on at a time
+    b. extract donor and acceptor sites and add to donor and acceptor PSSMs in splice
+3. Convert to frequencies and write out
 
 Michael Gribskov 2/6/2026
 ====================================================================================================================="""
-from sys import stderr
-from math import log
 from include.gff.gff2 import GxfSet
 from include.sequence.fasta import Fasta
 from collections import defaultdict
+import numpy as np
+from pssm import PSSM
 
 
 class SpliceSite:
     """=================================================================================================================
-    Frequency matrix for splice donor and acceptor
+    Frequency matrices for splice donor and acceptor. This class is mostly just a container for the donor and acceptor
+    sites which are PSSM objects.
+
+    Synopsis
+    # Create empty object
+    splice = SpliceSite()
+
+    #add count for a splice junction from its sequence
+    splice.add_junction(strand, donor, acceptor, sequence.seq)
+
+    # print donor and acceptor
+    PSSM.fieldwidth = len(maxval) + 2
+    PSSM.precision = 0
+    print(splice.donor)
+    print(splice.acceptor)
     ================================================================================================================="""
     base_complement = str.maketrans('ACGT', 'TGCA')
+    dna = 'ACGT'
+    protein = 'ACDEFGHIKLMNPQRSTVWY'
 
-    def __init__(self, pre=5, post=10, fieldwidth=4, precision=0):
+    def __init__(self, pre=5, post=10):
         """-------------------------------------------------------------------------------------------------------------
         holds position specific counts or frequencies for splice donor and acceptor sites
         pre and post are defined with respect to the exon side with before indicating the exon side
@@ -62,81 +59,13 @@ class SpliceSite:
 
         donor       position specific counts
         acceptor    position specific counts
-        donor_n     count of donor examples; use to calculate frequencies
-        acceptor_n  count of acceptor examples; use to calculate frequencies
-        pre         bases before site (exon side)
-        post        bases after site (intron side)
+        pre         bases before site (exon side for both donors and acceptors)
+        post        bases after site (intron side or both donors and acceptors)
         -------------------------------------------------------------------------------------------------------------"""
-        self.donor = []
-        self.donor_n = 0
-        self.acceptor = []
-        self.acceptor_n = 0
+        self.donor = PSSM(title='donor', rows='ACGT', offset=pre)
+        self.acceptor = PSSM(title='acceptor', rows='ACGT', offset=post)
         self.pre = pre
         self.post = post
-        self.fieldwidth = fieldwidth
-        self.precision = precision
-
-        # initialize donor and acceptor
-        self.site_init()
-
-    def site_init(self):
-        """-------------------------------------------------------------------------------------------------------------
-        initialize the count matrices (donor and acceptor), and the total counts (donor_n, acceptor_n)
-
-        :return: True
-        -------------------------------------------------------------------------------------------------------------"""
-        sitesize = self.pre + self.post
-        self.donor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-        self.acceptor = [{'A': 0.0, 'C': 0.0, 'G': 0.0, 'T': 0.0} for _ in range(sitesize)]
-        self.donor_n = self.acceptor_n = 0
-
-        return True
-
-    def read(self, filename):
-        """-------------------------------------------------------------------------------------------------------------
-        read a pssm written to a file by print(pssm, file=fh). Format:
-        donor:
-            A   0.279 0.294 0.374 0.385 0.149     | 0.000 0.000 0.668 0.550 0.053 0.107 0.302 0.240 0.275 0.210
-            C   0.294 0.275 0.252 0.172 0.195     | 0.000 0.019 0.042 0.183 0.027 0.156 0.275 0.248 0.275 0.302
-            G   0.229 0.244 0.221 0.183 0.477     | 1.000 0.000 0.248 0.057 0.893 0.069 0.198 0.179 0.137 0.229
-            T   0.198 0.187 0.153 0.260 0.179     | 0.000 0.981 0.042 0.210 0.027 0.668 0.225 0.332 0.313 0.260
-        acceptor:
-            A   0.256 0.267 0.237 0.179 0.156 0.164 0.363 0.053 1.000 0.000     | 0.286 0.218 0.271 0.225 0.252
-            C   0.305 0.290 0.313 0.313 0.244 0.340 0.260 0.718 0.000 0.000     | 0.267 0.321 0.347 0.321 0.313
-            G   0.122 0.191 0.126 0.172 0.164 0.134 0.248 0.011 0.000 1.000     | 0.263 0.202 0.176 0.214 0.214
-            T   0.317 0.252 0.324 0.336 0.435 0.363 0.130 0.218 0.000 0.000     | 0.183 0.260 0.206 0.240 0.221
-
-        :param filename: str    path to a readable file
-        :return: float          number of donor sequences, 1.0 indicates frequencies
-        -------------------------------------------------------------------------------------------------------------"""
-        try:
-            fh = open(filename, 'r')
-        except (IOError, OSError):
-            stderr.write(f'SpliceSite::read - unable to open ({filename}) for reading')
-            exit(1)
-
-        for jtype in ('donor', 'acceptor'):
-            skip = fh.readline()  # first line is donor: or acceptor:
-            baseline = {}
-            for _ in 'ACGT':
-                values = fh.readline().rstrip().split()
-                base = values[0]
-                baseline[base] = values[1:]
-
-            pssm = getattr(self, jtype)
-            for base in baseline:
-                sitepos = 0
-                for value in baseline[base]:
-                    if value == '|': continue  # skip |
-
-                    pssm[sitepos][base] = float(value)
-                    sitepos += 1
-
-        # count bases at position self.pre to get donor_n and acceptor_n
-        self.donor_n = sum(self.donor[self.pre].values())
-        self.acceptor_n = sum(self.acceptor[self.pre].values())
-
-        return self.donor_n
 
     def add_junction(self, strand, donorpos, acceptorpos, sequence):
         """-------------------------------------------------------------------------------------------------------------
@@ -150,8 +79,6 @@ class SpliceSite:
         :return: int, int           number of donor/acceptor sequences
         -------------------------------------------------------------------------------------------------------------"""
         sequence = sequence.upper()
-        self.donor_n += 1
-        self.acceptor_n += 1
         left = {}
         right = {}
         if strand == '+':
@@ -167,133 +94,17 @@ class SpliceSite:
             right['donor'] = donorpos + self.pre - 1
             left['acceptor'] = acceptorpos - self.pre
             right['acceptor'] = acceptorpos + self.post
-            # d = sequence[left['donor']:right['donor']].translate(SpliceSite.base_complement)[::-1]
-            # a = sequence[left['acceptor']:right['acceptor']].translate(SpliceSite.base_complement)[::-1]
-            # print(f'{strand}\t{d}\t{a}')
 
         for jtype in ('donor', 'acceptor'):
-            sitepos = 0
-            pssm = getattr(self, jtype)
-
             site = sequence[left[jtype]:right[jtype]]
+            pssm = getattr(self, jtype)
             if strand != '+':
                 # reverse complement - strand
                 site = site.translate(SpliceSite.base_complement)[::-1]
 
-            for base in site:
-                pssm[sitepos][base] += 1
-                sitepos += 1
+            pssm.add_counts_sequence(site)
 
-        return self.donor_n, self.acceptor_n
-
-    def frequency(self):
-        """------------------------------------------------------------------------------------------------------------
-        Return a new SpliceSite object with counts converted to frequencies.
-
-        :return: SpliceSite     positional probability of base | splice_site
-        -------------------------------------------------------------------------------------------------------------"""
-        frequency = SpliceSite()
-        for jtype in ('donor', 'acceptor'):
-            freqpos = 0
-            pssm = getattr(self, jtype)
-            freq = getattr(frequency, jtype)
-            freq_n = 0.0
-
-            # the frequency of bases at each position is calculated and stored in donor_n and acceptor_n. Currently,
-            # this is overwritten with 1, but it could be used to get the average number of observations per column
-            for pos in range(len(pssm)):
-                total = sum(pssm[pos].values())
-                # print(total)
-
-                for base in pssm[pos]:
-                    freq[freqpos][base] = pssm[pos][base] / total
-                    freq_n += freq[freqpos][base]
-
-                freqpos += 1
-
-            # After conversion, the frequency of all columns is 1
-            setattr(frequency, jtype + '_n', 1)
-
-        return frequency
-
-    def information(self):
-        """-------------------------------------------------------------------------------------------------------------
-        Calculate positional Shannon information for both donor and acceptor
-
-        :return: list, list     positional information for donor and acceptor
-        -------------------------------------------------------------------------------------------------------------"""
-        info = {'donor'   : [0.0 for _ in range(len(self.donor))],
-                'acceptor': [0.0 for _ in range(len(self.acceptor))]}
-        for jtype in info:
-            pssm = getattr(self, jtype)
-            h = info[jtype]
-
-            for pos in range(len(pssm)):
-                h[pos] = 0.0
-                for base in pssm[pos]:
-                    try:
-                        h[pos] += pssm[pos][base] * log(pssm[pos][base], 2)
-                    except ValueError:
-                        # log zero
-                        pass
-
-        return info
-
-    def sharpen(self, exponent, renormalize=True):
-        """-------------------------------------------------------------------------------------------------------------
-        Sharpen/flatten values by taking values to an exponent. Exponent > 1 sharpens, exponent < 1 flattens
-
-        :param exponent: float      each value is replaced by value ** exponent
-        :param renormalize: bool    whether to normalize the values by dividing by sum
-        :return: True
-        -------------------------------------------------------------------------------------------------------------"""
-        for jtype in ('donor', 'acceptor'):
-            pssm = getattr(self, jtype)
-            for column in pssm:
-                total = 0
-                for base in column:
-                    column[base] = column[base] ** exponent
-                    total += column[base]
-
-                if renormalize:
-                    for base in column:
-                        column[base] /= total
-
-        return True
-
-    @staticmethod
-    def complement(sequence):
-        """-------------------------------------------------------------------------------------------------------------
-        complements but does not reverse the sequence string A->T, C->G, G->C, T->A. No checking for ambiguous or
-        incorrect bases
-
-        :param sequence: str    DNA sequence, 5' to 3'
-        :return: str            complementary strand in 3' to 5' order
-        -------------------------------------------------------------------------------------------------------------"""
-
-    def __str__(self):
-        """-------------------------------------------------------------------------------------------------------------
-        formatted version of site. since __str__() does not accept parameters, the format is included in the object
-        itself (self.fmt)
-
-        :return: str    formatted string with donor and accptor sites
-        -------------------------------------------------------------------------------------------------------------"""
-        fmt = f'{self.fieldwidth}.{self.precision}f'
-        divider = f'{'|':>{self.fieldwidth}s}'
-        dpos = {'donor': self.pre - 1, 'acceptor': self.post - 1}
-        outstr = ''
-        for site in ('donor', 'acceptor'):
-            outstr += f'{site}:\n'
-            sitedata = getattr(self, site)
-            for base in sitedata[0]:
-                outstr += f'\t{base}  '
-                for pos, column in enumerate(sitedata):
-                    outstr += f'{column[base]:{fmt}}'
-                    if pos == dpos[site]:
-                        outstr += divider
-                outstr += '\n'
-
-        return outstr
+        return self.donor.n, self.acceptor.n
 
 
 # ======================================================================================================================
@@ -308,8 +119,10 @@ if __name__ == '__main__':
     gff = GxfSet(file=gff_file, fmt='gff')
     genome = Fasta(filename='data/z.tritici.IP0323.fasta')
 
+    ####################################################################################################################
     # read exon features from GFF file. Genes with more than one exon have a splice junction and are stored
     # as a list of exons in junction
+    ####################################################################################################################
     feature_n = gff.feature_get(['exon'])
     junction = defaultdict(list)
     feature_count = 0
@@ -319,7 +132,6 @@ if __name__ == '__main__':
     for feature in gff.features:
         # find exons from multi exon genes and store in junction
         feature_count += 1
-        # print(f'\t\t{feature.start}\t{feature.end}\t{feature.strand}\t{feature.attribute['Parent']}')
         if current == feature.attribute['Parent']:
             exon_set.append(feature)
         else:
@@ -339,7 +151,10 @@ if __name__ == '__main__':
     print(f'\nexons: {feature_count}')
     print(f'multiple exon sets: {exon_set_n}')
 
-    # read one sequence at a time from genome and process multiple exon genes in that sequence
+    ####################################################################################################################
+    # read one sequence at a time from the reference genome file, and process all exons multiple exon genes in that
+    # sequence
+    ####################################################################################################################
     splice = SpliceSite()
     jtotal = 0
     for sequence in genome:
@@ -350,7 +165,7 @@ if __name__ == '__main__':
             parent = exon_set[0].attribute['Parent']
             strand = exon_set[0].strand
 
-            # print(f'\tgene:{parent} strand: {strand}')
+            # main processing loop that adds counts to donor and acceptor PSSMs
             for i in range(len(exon_set) - 1):
                 if strand == '+':
                     donor = exon_set[i].end
@@ -361,51 +176,60 @@ if __name__ == '__main__':
 
                 splice.add_junction(strand, donor, acceptor, sequence.seq)
                 jcount += 1
+
         print(f'\t{jcount} junctions added from {sequence.id}')
         jtotal += jcount
 
-        # limit input for debug
+        # uncommenting this limits input to just the first sequence for debugging
         # break
 
-        splice.fieldwidth = 7
-        print(f'\n{splice}')
-
+    ####################################################################################################################
+    # Reports
+    ####################################################################################################################
     print(f'{jtotal} splice junctions analyzed')
 
-    frequency = splice.frequency()
-    frequency.fieldwidth = 6
-    frequency.precision = 3
-    print(f'\n{frequency}')
+    # raw counts
+    print(f'\n{'#' * 80}\n* counts\n{'#' * 80}')
+    maxval = f'{int(np.max(splice.donor.matrix))}'
+    PSSM.fieldwidth = len(maxval) + 2
+    PSSM.precision = 0
+    print(splice.donor)
+    print(splice.acceptor)
 
-    h = frequency.information()
-    print(f'\nPositional Shannon entropy:')
-    for jtype in ('donor', 'acceptor'):
-        linepos = frequency.pre
-        if jtype == 'acceptor':
-            linepos = frequency.post
+    # frequencies
+    print(f'\n{'#' * 80}\n* frequency\n{'#' * 80}')
+    PSSM.fieldwidth = 7
+    PSSM.precision = 3
+    donor_freq = splice.donor.frequency()
+    acceptor_freq = splice.acceptor.frequency()
+    print(donor_freq)
+    print(acceptor_freq)
 
-        print(f'\n{jtype:<8s}', end='\t')
-        pos = 0
-        for val in h[jtype]:
-            if pos == linepos:
-                print(f'{'|':>6s}', end='')
-            print(f'{2 + val:6.3f}', end='')
+    # positional information content
+    print(f'\n{'#' * 80}\n# Positional Shannon entropy\n{'#' * 80}')
+    I = donor_freq.information()
+    J = acceptor_freq.information()
+    # print(I)
+    fmt = f'{PSSM.fieldwidth}.{PSSM.precision}f'
+    print('\ndonor')
+    fI = '\t '
+    for i in I:
+        fI += f'{i:{fmt}}'
+    print(fI)
+    print('\nacceptor')
+    fJ = '\t '
+    for j in J:
+        fJ += f'{j:{fmt}}'
+    print(fJ)
 
-            pos += 1
+    # write donor and acceptor frequencies
+    with open('donor.dat', 'w') as fq:
+        print(f'{donor_freq}', file=fq)
+    with open('acceptor.dat', 'w') as fq:
+        print(f'{acceptor_freq}', file=fq)
 
-    print()
-
-    with open('frequency.dat', 'w') as fq:
-        print(f'{frequency}', file=fq)
-
-    fq_from_file = SpliceSite()
-    n = fq_from_file.read('frequency.dat')
-    print(f'\n{n} frequencies read from frequency.dat')
-    fq_from_file.fieldwidth = 6
-    fq_from_file.precision = 3
-
-    print(f'Sharpened frequencies')
-    fq_from_file.sharpen(2)
-    print(fq_from_file)
+    # print(f'Sharpened frequencies')
+    # fq_from_file.sharpen(2)
+    # print(fq_from_file)
 
     exit(0)

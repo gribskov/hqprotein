@@ -1,0 +1,24 @@
+================== AF3 Run Metadata ==================
+Job Name:      multimerC_NLR_G500_lossHMA
+Input JSON:    multimerC_NLR_G500_lossHMA.json
+Dataset:       pascal_PI655988_multimers
+Array Task:    3 / 3
+Seeds:         1
+Chains:        2
+  Chain A: protein (1028 residues)
+  Chain B: protein (72 residues)
+
+-------------- SLURM -----------------------------------
+Array Job ID:  15504552
+Task ID:       3
+Job ID:        15504552
+Partition:     gpu
+Node:          g000
+GPUs:          1
+CPUs:          16
+Memory:        131072MB
+Account:       bio250181-gpu
+
+-------------- Timing ----------------------------------
+Started:       Wed Mar  4 15:27:43 EST 2026
+Finished:      Wed Mar  4 15:57:29 EST 2026
