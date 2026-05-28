@@ -291,32 +291,31 @@ def write_metadata(genes, selected_ids, output_path):
 # CLI
 # ---------------------------------------------------------------------------
 if __name__ == '__main__':
-    if len(sys.argv) < 5:
-        print("Usage: 03_submit_alphafold.py <proteins.fasta[.gz]> "
-              "<annotation.gff[.gz]> <output_dir> <metadata.tsv>",
-              file=sys.stderr)
-        sys.exit(1)
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Sample proteins and generate AlphaFold 3 input JSONs')
+    parser.add_argument('--fasta', required=True,
+                        help='Protein FASTA from SGD (.fasta or .fasta.gz)')
+    parser.add_argument('--gff', required=True,
+                        help='GFF annotation for exon counts (.gff or .gff.gz)')
+    parser.add_argument('--outdir', required=True,
+                        help='Directory for AF3 input JSONs and sample_metadata.tsv')
+    args = parser.parse_args()
 
-    fasta_path = sys.argv[1]
-    gff_path = sys.argv[2]
-    output_dir = sys.argv[3]
-    metadata_path = sys.argv[4]
+    Path(args.outdir).mkdir(parents=True, exist_ok=True)
 
-    # make output directory
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    genes = parse_fasta(args.fasta)
 
-    genes = parse_fasta(fasta_path)
-
-    exon_counts = count_exons_from_gff(gff_path)
+    exon_counts = count_exons_from_gff(args.gff)
     for gid in genes:
         genes[gid]['n_exons'] = exon_counts.get(gid, 1)
 
     selected = sample_proteins(genes)
 
     for gid in selected:
-        write_af3_json(genes[gid], output_dir)
+        write_af3_json(genes[gid], args.outdir)
 
-    write_metadata(genes, selected, metadata_path)
+    write_metadata(genes, selected, str(Path(args.outdir) / 'sample_metadata.tsv'))
 
     # one-line summary: how many sampled out of how many total
-    print(f"{len(selected)} / {len(genes)} -> {output_dir}/", file=sys.stderr)
+    print(f"{len(selected)} / {len(genes)} -> {args.outdir}/", file=sys.stderr)

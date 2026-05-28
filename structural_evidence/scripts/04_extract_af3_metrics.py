@@ -4,15 +4,13 @@
 # Alex Baena, Mar 2026
 #
 # Processes an AF3 output directory and writes per-protein metric files:
-#   extracted_metrics_<tag>/
-#     Q0075/
+#   outdir/
+#     {gene_id}/
 #       plddt.tsv                (residue_number, plddt)
 #       ptm.tsv                  (ptm value)
 #       fraction_disordered.tsv  (fraction value)
 #       pae.tsv                  (NxN matrix, tab-delimited)
 #       metadata.tsv             (gene_id, category, length, exons, etc.)
-#     YAL046C/
-#       ...
 #
 
 import sys
@@ -125,23 +123,49 @@ def process_protein(pid, protein_dir, out_dir, meta_row):
         f.write('\t'.join(str(meta_row[c]) for c in cols) + '\n')
 
 
+def find_metadata(indir):
+    """Locate sample_metadata.tsv. Checks indir first, then sibling dirs
+    with the same run name."""
+    indir = Path(indir)
+    run_name = indir.name
+
+    # check indir itself
+    path = indir / 'sample_metadata.tsv'
+    if path.exists():
+        return path
+
+    # check sibling dirs with same run name
+    for sibling in indir.parent.parent.iterdir():
+        path = sibling / run_name / 'sample_metadata.tsv'
+        if path.exists():
+            return path
+
+    return None
+
+
 if __name__ == '__main__':
-    if len(sys.argv) < 4:
-        print("Usage: 04_extract_af3_metrics.py <af3_output_dir> <output_dir> "
-              "<sample_metadata.tsv>", file=sys.stderr)
+    import argparse
+    parser = argparse.ArgumentParser(
+        description='Extract raw metrics from AlphaFold 3 output directories')
+    parser.add_argument('--indir', required=True,
+                        help='AF3 output directory (contains protein subdirs)')
+    parser.add_argument('--outdir', required=True,
+                        help='Output directory for extracted metric files')
+    args = parser.parse_args()
+
+    meta_path = find_metadata(args.indir)
+    if meta_path is None:
+        print('Could not find sample_metadata.tsv', file=sys.stderr)
         sys.exit(1)
 
-    af3_dir = sys.argv[1]
-    out_dir = sys.argv[2]
-    meta = load_metadata(sys.argv[3])
-
-    proteins = find_proteins(af3_dir)
+    meta = load_metadata(str(meta_path))
+    proteins = find_proteins(args.indir)
     n = 0
     for pid in sorted(proteins):
         try:
-            process_protein(pid, proteins[pid], out_dir, meta[pid])
+            process_protein(pid, proteins[pid], args.outdir, meta[pid])
             n += 1
         except Exception as e:
             print(f"skip {pid}: {e}", file=sys.stderr)
 
-    print(f"{n} / {len(proteins)} -> {out_dir}/", file=sys.stderr)
+    print(f"{n} / {len(proteins)} -> {args.outdir}/", file=sys.stderr)
