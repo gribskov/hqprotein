@@ -16,7 +16,8 @@ gene_id: species_gid - sequential numbering withing species
 transcript.id: gene.transcript given in original GFF input (in this case braker3)
 
 Usage:
-select_isoforms.py SequenceIDs.txt > isoform.list.txt
+select_isoforms.py SequenceIDs.txt                      # writes yaml to stdout
+select_isoforms.py SequenceIDs.txt isoform.list.yaml    # writes yaml to isoform.list.yaml
 
 2026-06-16 gribskov
 ====================================================================================================================="""
@@ -31,10 +32,17 @@ if __name__ == '__main__':
     seq = open(seqname, 'r')
     print(f'sequence IDs: {seqname}')
 
+    if len(sys.argv) < 3:
+        # no output file given, write to stdout
+        outfile = sys.stdout
+    else:
+        outfile = open(sys.argv[2], 'w')
+
     nid = 0
     gene_n = 0
+    tgroup = 0
     ilist = []
-    isoformlist = []
+    isoformlist = {}
     prev = ''
     for line in seq:
         nid += 1
@@ -49,22 +57,23 @@ if __name__ == '__main__':
             # new gene is a different isoform than the one in ilist
             gene_n += 1
             if len(ilist) > 1:
-                isoformlist.append(ilist)
+                # isoformlist.append(ilist)
+                isoformlist[f'tgroup_{tgroup}'] = ilist
+                tgroup += 1
             ilist = [{'nid': nid, 'gid': gid, 'tid': tid}]
 
         prev = gene
         print(f'{nid}\t{gid}\t{tid}')
 
-    if len(ilist): isoformlist.append(ilist)
+    # if len(ilist): isoformlist.append(ilist)
+    if len(ilist): isoformlist[f'tgroup_{tgroup}'] = ilist
     seq.close()
 
     print(f'\nisoforms read: {nid}')
     print(f'genes: {gene_n}')
     print(f'multiple isoforms: {len(isoformlist)} ({len(isoformlist) / gene_n * 100:.2f}%)')
 
-    # outfile = open(sys.argv[2], "w")
-    outfile = sys.stdout
-    yaml.dump(isoformlist, outfile, default_flow_style=False, sort_keys=False)
+    yaml.dump(isoformlist, outfile, explicit_start=True, default_flow_style=None, sort_keys=False)
     outfile.close()
 
     exit(0)
