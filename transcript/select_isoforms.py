@@ -21,6 +21,7 @@ select_isoforms.py SequenceIDs.txt > isoform.list.txt
 2026-06-16 gribskov
 ====================================================================================================================="""
 import sys
+import yaml
 
 # ======================================================================================================================
 # Main
@@ -60,5 +61,10 @@ if __name__ == '__main__':
     print(f'\nisoforms read: {nid}')
     print(f'genes: {gene_n}')
     print(f'multiple isoforms: {len(isoformlist)} ({len(isoformlist) / gene_n * 100:.2f}%)')
+
+    # outfile = open(sys.argv[2], "w")
+    outfile = sys.stdout
+    yaml.dump(isoformlist, outfile, default_flow_style=False, sort_keys=False)
+    outfile.close()
 
     exit(0)
